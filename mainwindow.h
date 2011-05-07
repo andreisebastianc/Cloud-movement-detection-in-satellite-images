@@ -5,6 +5,7 @@
 #include "imageshandler.h"
 #include <QFileDialog>
 #include <QDebug>
+#include <QFileInfo>
 
 namespace Ui {
     class MainWindow;
