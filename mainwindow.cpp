@@ -6,6 +6,8 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    this->displayScene.setBackgroundBrush(QBrush(QColor(255,0,0)));
+    ui->imageDisplayer->setScene(&this->displayScene);
 }
 
 MainWindow::~MainWindow()
@@ -35,8 +37,10 @@ void MainWindow::on_addImagesButton_released()
         }
         // displays only the first image in a sequence
         this->pixmapObject = QPixmap(files.at(0));
-        pixmapObject = pixmapObject.scaled(ui->imageDisplayer->size(),Qt::KeepAspectRatio, Qt::FastTransformation );
-        ui->imageDisplayer->setPixmap(pixmapObject);
+        qDebug() << this->ui->imageDisplayer->size() <<' '<< pixmapObject.size();
+        pixmapObject = pixmapObject.scaled(ui->imageDisplayer->size(),Qt::KeepAspectRatioByExpanding, Qt::FastTransformation );
+        // set image in graphics view
+        this->displayScene.addPixmap(pixmapObject);
 
         // qDebug() << this->imagesPath;
     }
@@ -48,8 +52,11 @@ void MainWindow::on_addImagesButton_released()
 void MainWindow::on_filesListWidget_itemSelectionChanged()
 {
     this->pixmapObject = QPixmap(this->imagesPath.at(ui->filesListWidget->currentRow()));
-    pixmapObject = pixmapObject.scaled(ui->imageDisplayer->size(),Qt::KeepAspectRatio, Qt::FastTransformation );
-    ui->imageDisplayer->setPixmap(pixmapObject);
+    this->displayScene.clear();
+    qDebug() << this->ui->imageDisplayer->size() <<' '<< pixmapObject.size();
+    pixmapObject = pixmapObject.scaled(ui->imageDisplayer->size(),Qt::KeepAspectRatioByExpanding, Qt::FastTransformation );
+    this->displayScene.addPixmap(pixmapObject);
+    //set image in graphics view
 }
 
 /** the default run application call
@@ -61,11 +68,17 @@ void MainWindow::on_actionRun_triggered(){
     ih.calculateHashForBlocks();
 }
 
+/** updates the size of the block
+  *
+  */
 void MainWindow::on_blockSizeSlider_valueChanged(int value)
 {
     ui->blockSizeLabel->setText("Block size: "+QString::number(value));
 }
 
+/** updates the size of the window
+  *
+  */
 void MainWindow::on_searchWindowSlider_valueChanged(int value)
 {
     ui->searchWindowLabel->setText("Search window size: "+QString::number(value));

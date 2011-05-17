@@ -2,13 +2,15 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-#include "imageshandler.h"
 #include <QFileDialog>
 #include <QDebug>
 #include <QFileInfo>
 #include <QList>
 #include <QString>
 #include <QListWidgetItem>
+#include <QGraphicsScene>
+#include <QGraphicsItem>
+#include "imageshandler.h"
 
 namespace Ui {
     class MainWindow;
@@ -32,9 +34,12 @@ private slots:
 private:
     Ui::MainWindow *ui;
     ImagesHandler* imageHandler;
-    void loadImages();
     QList<QString> imagesPath;
     QPixmap pixmapObject;
+    QGraphicsScene displayScene;
+    QGraphicsItem *backgroundImage;
+
+    void loadImages();
 };
 
 #endif // MAINWINDOW_H
