@@ -8,12 +8,16 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
     this->displayScene.setBackgroundBrush(QBrush(QColor(255,0,0)));
     ui->imageDisplayer->setScene(&this->displayScene);
+    this->finder = new MovementFinder();
+    this->blockSize = 20;
+    this->windowSize = 60;
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
-    delete this->imageHandler;
+    //delete this->imageHandler;
+    delete this->finder;
 }
 
 /** opens a select dialog that allows multiple files to be selected
@@ -38,10 +42,9 @@ void MainWindow::on_addImagesButton_released()
         // displays only the first image in a sequence
         this->pixmapObject = QPixmap(files.at(0));
         qDebug() << this->ui->imageDisplayer->size() <<' '<< pixmapObject.size();
-        pixmapObject = pixmapObject.scaled(ui->imageDisplayer->size(),Qt::KeepAspectRatioByExpanding, Qt::FastTransformation );
+        //pixmapObject = pixmapObject.scaled(ui->imageDisplayer->size(),Qt::KeepAspectRatioByExpanding, Qt::FastTransformation );
         // set image in graphics view
         this->displayScene.addPixmap(pixmapObject);
-
         // qDebug() << this->imagesPath;
     }
 }
@@ -54,7 +57,7 @@ void MainWindow::on_filesListWidget_itemSelectionChanged()
     this->pixmapObject = QPixmap(this->imagesPath.at(ui->filesListWidget->currentRow()));
     this->displayScene.clear();
     qDebug() << this->ui->imageDisplayer->size() <<' '<< pixmapObject.size();
-    pixmapObject = pixmapObject.scaled(ui->imageDisplayer->size(),Qt::KeepAspectRatioByExpanding, Qt::FastTransformation );
+    //pixmapObject = pixmapObject.scaled(ui->imageDisplayer->size(),Qt::KeepAspectRatioByExpanding, Qt::FastTransformation );
     this->displayScene.addPixmap(pixmapObject);
     //set image in graphics view
 }
@@ -63,23 +66,45 @@ void MainWindow::on_filesListWidget_itemSelectionChanged()
   *
   */
 void MainWindow::on_actionRun_triggered(){
-    ImagesHandler ih(0,10);
-    ih.setImages(QImage(this->imagesPath.at(0)),QImage(this->imagesPath.at(0)));
-    ih.calculateHashForBlocks();
+//    ImagesHandler ih(0,10);
+//    ih.setImages(QImage(this->imagesPath.at(0)),QImage(this->imagesPath.at(0)));
+//    ih.calculateHashForBlocks();
+    connect(this->finder,SIGNAL(operationsComplete()),this,SLOT(drawMovementLines()));
+    this->finder->setFirstFrame(this->imagesPath.at(0));
+    this->finder->setSecondFrame(this->imagesPath.at(1));
+    this->finder->start();
+}
+
+void MainWindow::drawMovementLines(){
+    QList<QPair<QPoint,QPoint> > draw = this->finder->getWhatToDraw();
+    for(int i=0;i<draw.size();i++){
+        QGraphicsLineItem *line = new QGraphicsLineItem(draw.at(i).first.x()*this->blockSize,
+                                                        draw.at(i).first.y()*this->blockSize,
+                                                        draw.at(i).second.x()*this->blockSize,
+                                                        draw.at(i).second.y()*this->blockSize);
+        this->displayScene.addItem(line);
+        line->setZValue(100);
+    }
 }
 
 /** updates the size of the block
+  * sets the value in the worker thread
   *
   */
 void MainWindow::on_blockSizeSlider_valueChanged(int value)
 {
+    this->blockSize = value;
+    this->finder->setConstraitmentSizes(this->blockSize,this->windowSize);
     ui->blockSizeLabel->setText("Block size: "+QString::number(value));
 }
 
 /** updates the size of the window
+  * sets the value in the worker thread
   *
   */
 void MainWindow::on_searchWindowSlider_valueChanged(int value)
 {
+    this->windowSize = value;
+    this->finder->setConstraitmentSizes(this->blockSize,this->windowSize);
     ui->searchWindowLabel->setText("Search window size: "+QString::number(value));
 }

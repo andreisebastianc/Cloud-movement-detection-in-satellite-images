@@ -11,6 +11,7 @@
 #include <QGraphicsScene>
 #include <QGraphicsItem>
 #include "imageshandler.h"
+#include "movementfinder.h"
 
 namespace Ui {
     class MainWindow;
@@ -30,10 +31,15 @@ private slots:
     void on_blockSizeSlider_valueChanged(int value);
     void on_searchWindowSlider_valueChanged(int value);
     void on_actionRun_triggered();
+    void drawMovementLines();
 
 private:
+    int blockSize;
+    int windowSize;
+
     Ui::MainWindow *ui;
-    ImagesHandler* imageHandler;
+    //ImagesHandler* imageHandler;
+    MovementFinder* finder;
     QList<QString> imagesPath;
     QPixmap pixmapObject;
     QGraphicsScene displayScene;

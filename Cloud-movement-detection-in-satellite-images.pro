@@ -12,9 +12,11 @@ TEMPLATE = app
 
 SOURCES += main.cpp\
         mainwindow.cpp \
-    imageshandler.cpp
+    imageshandler.cpp \
+    movementfinder.cpp
 
 HEADERS  += mainwindow.h \
-    imageshandler.h
+    imageshandler.h \
+    movementfinder.h
 
 FORMS    += mainwindow.ui
