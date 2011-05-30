@@ -55,10 +55,9 @@ void MainWindow::on_addImagesButton_released()
 void MainWindow::on_filesListWidget_itemSelectionChanged()
 {
     this->pixmapObject = QPixmap(this->imagesPath.at(ui->filesListWidget->currentRow()));
-    this->displayScene.clear();
-    qDebug() << this->ui->imageDisplayer->size() <<' '<< pixmapObject.size();
+    //qDebug() << this->ui->imageDisplayer->size() <<' '<< pixmapObject.size();
     //pixmapObject = pixmapObject.scaled(ui->imageDisplayer->size(),Qt::KeepAspectRatioByExpanding, Qt::FastTransformation );
-    this->displayScene.addPixmap(pixmapObject);
+    this->drawLines();
     //set image in graphics view
 }
 
@@ -66,22 +65,27 @@ void MainWindow::on_filesListWidget_itemSelectionChanged()
   *
   */
 void MainWindow::on_actionRun_triggered(){
-//    ImagesHandler ih(0,10);
-//    ih.setImages(QImage(this->imagesPath.at(0)),QImage(this->imagesPath.at(0)));
-//    ih.calculateHashForBlocks();
-    connect(this->finder,SIGNAL(operationsComplete()),this,SLOT(drawMovementLines()));
     this->finder->setFirstFrame(this->imagesPath.at(0));
     this->finder->setSecondFrame(this->imagesPath.at(1));
+    connect(this->finder,SIGNAL(operationsComplete()),this,SLOT(getMovementLines()));
     this->finder->start();
 }
 
-void MainWindow::drawMovementLines(){
-    QList<QPair<QPoint,QPoint> > draw = this->finder->getWhatToDraw();
-    for(int i=0;i<draw.size();i++){
-        QGraphicsLineItem *line = new QGraphicsLineItem(draw.at(i).first.x()*this->blockSize,
-                                                        draw.at(i).first.y()*this->blockSize,
-                                                        draw.at(i).second.x()*this->blockSize,
-                                                        draw.at(i).second.y()*this->blockSize);
+void MainWindow::getMovementLines(){
+    this->draw = this->finder->getWhatToDraw();
+    drawLines();
+}
+
+void MainWindow::drawLines(){
+    this->displayScene.clear();
+    this->displayScene.addPixmap(this->pixmapObject);
+    for(int i=0;i<this->draw.size();i++){
+        QGraphicsLineItem *line = new QGraphicsLineItem(
+                    this->draw.at(i).first.x()*this->blockSize+this->blockSize/2,
+                    this->draw.at(i).first.y()*this->blockSize+this->blockSize/2,
+                    this->draw.at(i).second.x()*this->blockSize+this->blockSize/2,
+                    this->draw.at(i).second.y()*this->blockSize+this->blockSize/2
+                    );
         this->displayScene.addItem(line);
         line->setZValue(100);
     }

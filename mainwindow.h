@@ -31,11 +31,12 @@ private slots:
     void on_blockSizeSlider_valueChanged(int value);
     void on_searchWindowSlider_valueChanged(int value);
     void on_actionRun_triggered();
-    void drawMovementLines();
+    void getMovementLines();
 
 private:
     int blockSize;
     int windowSize;
+    QList<QPair<QPoint,QPoint> > draw;
 
     Ui::MainWindow *ui;
     //ImagesHandler* imageHandler;
@@ -46,6 +47,7 @@ private:
     QGraphicsItem *backgroundImage;
 
     void loadImages();
+    void drawLines();
 };
 
 #endif // MAINWINDOW_H

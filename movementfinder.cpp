@@ -47,18 +47,24 @@ void MovementFinder::run(){
 //            int searchWindowYPos = 0 + this->patternSize / 2;
 
             int blocksInWindow = this->windowSize/this->patternSize;
+            int totalNumberOfBlocks = this->firstFrame->height()/this->patternSize;
             long sum;
             int valueFF[this->patternSize][this->patternSize], valueSF;
             int ffModifierX, ffModifierY, sfModifierX, sfModifierY;
-            int prevSSD = 65532;
+            int prevSSD;
+            QPoint drawFrom, drawTo;
+            bool mantainsPosition, conflicted;
+            int conflictCounter;
 
-            sum = 0;
-            for(int fframe_i=0;fframe_i<blocksInWindow;fframe_i++){
-                for(int fframe_j=0;fframe_j<blocksInWindow;fframe_j++){
+            for(int fframe_i=0;fframe_i<totalNumberOfBlocks;fframe_i++){
+                for(int fframe_j=0;fframe_j<totalNumberOfBlocks;fframe_j++){
 
-                    QPoint drawFrom, drawTo;
                     drawFrom.setX(fframe_i);
                     drawFrom.setY(fframe_j);
+                    mantainsPosition = true;
+                    conflicted = false;
+                    conflictCounter = 0;
+                    prevSSD = 60000;
 
 
                     //qDebug() << "blocul: "<<fframe_i<<", "<<fframe_j;
@@ -75,6 +81,7 @@ void MovementFinder::run(){
                         for(int j=0;j<blocksInWindow;j++){
                             sfModifierX = i * this->patternSize;
                             sfModifierY = j * this->patternSize;
+                            sum = 0;
 
                             for(int block_i = 0 ; block_i < this->patternSize ; block_i++){
                                 for(int block_j = 0 ; block_j < this->patternSize ; block_j++){
@@ -83,59 +90,42 @@ void MovementFinder::run(){
                                     sum += valueSF * valueSF;
                                 }
                             }
+
                             //qDebug() << "[" << i <<","<<j<<"]= "<< sum;
-                            if(prevSSD > sum){
-                                prevSSD = sum;
-                                drawTo.setX(i);
-                                drawTo.setY(j);
+
+                            if(prevSSD == sum){
+                                conflictCounter++;
                             }
-                            sum = 0;
+
+                            // the block that is matched
+                            if(i==fframe_i && j==fframe_j){
+                                if(prevSSD >= sum){
+                                    prevSSD = sum;
+                                    mantainsPosition = true;
+                                }
+                            }
+                            else{
+                                if(prevSSD > sum){
+                                    mantainsPosition = false;
+                                    conflictCounter = 0;
+                                    prevSSD = sum;
+                                    drawTo.setX(i);
+                                    drawTo.setY(j);
+                                    //qDebug() << "[" << i <<","<<j<<"]= "<< sum;
+                                }
+                            }
                         }
                     }
 
-                    QPair<QPoint,QPoint> drawPoints;
-                    drawPoints.first = drawFrom;
-                    drawPoints.second = drawTo;
-                    this->toDraw.append(drawPoints);
-                    //qDebug() << drawFrom << " to " << drawTo;
+                    if(!mantainsPosition && conflictCounter==0){
+                        QPair<QPoint,QPoint> drawPoints;
+                        drawPoints.first = drawFrom;
+                        drawPoints.second = drawTo;
+                        this->toDraw.append(drawPoints);
 
+                        qDebug() << drawFrom << " to " << drawTo;
+                    }
 
-
-//                    for(int block_i = 0 ; block_i < this->patternSize ; block_i++){
-//                        for(int block_j = 0 ; block_j < this->patternSize ; block_j++){
-//                            value = qGray(this->firstFrame->pixel(block_i+xtemp,block_j+ytemp));
-//                            sum += value;
-//                            sqrsum += value * value;
-//                        }
-//                    }
-
-//                    mean = sum/(this->patternSize*this->patternSize);
-//                    var2template = sqrsum - (sum * sumOfSquaredDiffs)/(this->patternSize*this->patternSize);
-
-//                    for(int i=0;i<blocksInWindow;i++){
-//                        for(int j=0;j<blocksInWindow;j++){
-//                            sum = 0;
-//                            sqrsum = 0;
-//                            prodsum = 0;
-//                            for(int block_i = 0 ; block_i < this->patternSize ; block_i++){
-//                                for(int block_j = 0 ; block_j < this->patternSize ; block_j++){
-//                                    value = qGray(this->secondFrame->pixel(block_i + i*this->patternSize,block_j + j*this->patternSize));
-//                                    sum += value;
-//                                    sqrsum += value*value;
-//                                    prodsum += value*qGray(this->firstFrame->pixel(block_i+xtemp,block_j+ytemp));
-//                                }
-//                            }
-//                            var2image = sqrsum-(sum*sumOfSquaredDiffs)/(this->patternSize*this->patternSize);
-//                            qDebug() << "[" << i <<","<<j<<"]= "<< (prodsum - (mean*sum)) / sqrt(var2image * var2template);
-//                            koef[i][j] = (prodsum - (mean*sum)) / sqrt(var2image * var2template);
-//                        }
-//                    }
-
-                    // get the movements
-//                    for(int i=0;i<blocksInWindow;i++){
-//                        for(int j=0;j<blocksInWindow;j++){
-//                        }
-//                    }
                 }
             }
 
