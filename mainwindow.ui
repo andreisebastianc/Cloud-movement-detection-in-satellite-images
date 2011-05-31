@@ -33,35 +33,12 @@
      <enum>QTabWidget::North</enum>
     </property>
     <property name="currentIndex">
-     <number>0</number>
+     <number>1</number>
     </property>
     <widget class="QWidget" name="optionsTab">
      <attribute name="title">
       <string>Options</string>
      </attribute>
-     <widget class="QRadioButton" name="radioButton">
-      <property name="geometry">
-       <rect>
-        <x>20</x>
-        <y>60</y>
-        <width>107</width>
-        <height>21</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Use Coeficient</string>
-      </property>
-     </widget>
-     <widget class="QLineEdit" name="lineEdit">
-      <property name="geometry">
-       <rect>
-        <x>140</x>
-        <y>60</y>
-        <width>95</width>
-        <height>22</height>
-       </rect>
-      </property>
-     </widget>
      <widget class="QLabel" name="blockSizeLabel">
       <property name="geometry">
        <rect>
@@ -95,6 +72,9 @@
         <width>84</width>
         <height>23</height>
        </rect>
+      </property>
+      <property name="minimum">
+       <number>2</number>
       </property>
       <property name="maximum">
        <number>100</number>
@@ -140,6 +120,9 @@
         <height>23</height>
        </rect>
       </property>
+      <property name="minimum">
+       <number>30</number>
+      </property>
       <property name="maximum">
        <number>300</number>
       </property>
@@ -149,6 +132,41 @@
       <property name="orientation">
        <enum>Qt::Horizontal</enum>
       </property>
+     </widget>
+     <widget class="QRadioButton" name="radioButton_2">
+      <property name="geometry">
+       <rect>
+        <x>20</x>
+        <y>100</y>
+        <width>131</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Hide Conflicted</string>
+      </property>
+     </widget>
+     <widget class="QWidget" name="layoutWidget">
+      <property name="geometry">
+       <rect>
+        <x>20</x>
+        <y>60</y>
+        <width>208</width>
+        <height>24</height>
+       </rect>
+      </property>
+      <layout class="QHBoxLayout" name="horizontalLayout_2">
+       <item>
+        <widget class="QRadioButton" name="radioButton">
+         <property name="text">
+          <string>Use Coeficient</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLineEdit" name="lineEdit"/>
+       </item>
+      </layout>
      </widget>
     </widget>
     <widget class="QWidget" name="filesTab">
@@ -191,12 +209,15 @@
         <property name="alternatingRowColors">
          <bool>true</bool>
         </property>
+        <property name="sortingEnabled">
+         <bool>true</bool>
+        </property>
        </widget>
       </item>
      </layout>
     </widget>
    </widget>
-   <widget class="QGraphicsView" name="imageDisplayer">
+   <widget class="MovementScene" name="imageDisplayer">
     <property name="geometry">
      <rect>
       <x>270</x>
@@ -212,10 +233,8 @@
      </sizepolicy>
     </property>
    </widget>
-   <zorder>splitter</zorder>
+   <zorder>imageDisplayer</zorder>
    <zorder>tabWidget</zorder>
-   <zorder>tabWidget</zorder>
-   <zorder>verticalScrollBar</zorder>
   </widget>
   <widget class="QMenuBar" name="menuBar">
    <property name="geometry">
@@ -253,6 +272,13 @@
   </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
+ <customwidgets>
+  <customwidget>
+   <class>MovementScene</class>
+   <extends>QGraphicsView</extends>
+   <header location="global">movementscene.h</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

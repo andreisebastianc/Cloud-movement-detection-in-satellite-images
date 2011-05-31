@@ -6,11 +6,12 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    this->displayScene.setBackgroundBrush(QBrush(QColor(255,0,0)));
+    this->displayScene.setBackgroundBrush(QBrush(QColor(230,230,230)));
     ui->imageDisplayer->setScene(&this->displayScene);
     this->finder = new MovementFinder();
-    this->blockSize = 20;
-    this->windowSize = 60;
+    this->blockSize = ui->blockSizeSlider->value();
+    this->windowSize = ui->searchWindowSlider->value();
+    this->ui->filesListWidget->setSortingEnabled(true);
 }
 
 MainWindow::~MainWindow()
@@ -36,12 +37,16 @@ void MainWindow::on_addImagesButton_released()
         QFileInfo theFileInfo;
         for(int i=0;i<files.count();i++){
             theFileInfo.setFile(files.at(i));
-            ui->filesListWidget->addItem(theFileInfo.fileName());
+            QListWidgetItem* item = new QListWidgetItem(theFileInfo.fileName(),ui->filesListWidget);
+            item->setFlags(Qt::ItemIsSelectable|Qt::ItemIsUserCheckable|Qt::ItemIsEnabled);
+            item->setCheckState(Qt::Unchecked);
+            qDebug()<<item->flags();
+            ui->filesListWidget->addItem(item);
             this->imagesPath << files.at(i);
         }
         // displays only the first image in a sequence
         this->pixmapObject = QPixmap(files.at(0));
-        qDebug() << this->ui->imageDisplayer->size() <<' '<< pixmapObject.size();
+        //qDebug() << this->ui->imageDisplayer->size() <<' '<< pixmapObject.size();
         //pixmapObject = pixmapObject.scaled(ui->imageDisplayer->size(),Qt::KeepAspectRatioByExpanding, Qt::FastTransformation );
         // set image in graphics view
         this->displayScene.addPixmap(pixmapObject);
@@ -99,6 +104,7 @@ void MainWindow::on_blockSizeSlider_valueChanged(int value)
 {
     this->blockSize = value;
     this->finder->setConstraitmentSizes(this->blockSize,this->windowSize);
+    this->ui->imageDisplayer->setGridBlockSize(value);
     ui->blockSizeLabel->setText("Block size: "+QString::number(value));
 }
 

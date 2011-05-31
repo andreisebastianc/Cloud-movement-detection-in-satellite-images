@@ -8,6 +8,8 @@
 #include <QDebug>
 #include "math.h"
 
+enum Corelations {SSD = 0};
+
 class MovementFinder : public QThread
 {
     Q_OBJECT
@@ -23,13 +25,16 @@ public:
 
 private:
     volatile bool stopped;
-    int patternSize;
-    int windowSize;
+    int patternSize; // the size of the blocks
+    int windowSize; // the size of the window where to search for matching blocks
     bool firstFrameIsSet;
     bool secondFrameIsSet;
+    Corelations corelationToUse;
     QImage* firstFrame;
     QImage* secondFrame;
     QList<QPair<QPoint,QPoint> > toDraw;
+
+    QPoint getMovementDestination(QPair<int,int> block);
 
 protected:
     void run();

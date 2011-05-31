@@ -6,6 +6,7 @@ MovementFinder::MovementFinder()
     this->patternSize = 20;
     this->windowSize = 60;
     this->firstFrame = new QImage();
+    this->corelationToUse = Corelations(0);
 }
 
 MovementFinder::~MovementFinder(){
@@ -33,6 +34,28 @@ void MovementFinder::setSecondFrame(QString secondFramePath){
 void MovementFinder::setConstraitmentSizes(int patternSize, int windowSize){
     this->patternSize = patternSize;
     this->windowSize = windowSize;
+}
+
+/**
+  *
+  */
+QPoint MovementFinder::getMovementDestination(QPair<int,int> block){
+    QPoint destionationBlockCoord;
+
+    // get the values of the pixels from the first image into an array
+    for(int block_i = 0 ; block_i < this->patternSize ; block_i++){
+        for(int block_j = 0 ; block_j < this->patternSize ; block_j++){
+            valueFF[block_i][block_j] = qGray(this->firstFrame->pixel(block_i+block.first,block_j+block.second));
+        }
+    }
+
+    switch(this->corelationToUse){
+    case SSD :
+        break;
+    default:
+        break;
+    }
+    return destionationBlockCoord;
 }
 
 /**
@@ -76,6 +99,7 @@ void MovementFinder::run(){
                             valueFF[block_i][block_j] = qGray(this->firstFrame->pixel(block_i+ffModifierX,block_j+ffModifierY));
                         }
                     }
+
 
                     for(int i=0;i<blocksInWindow;i++){
                         for(int j=0;j<blocksInWindow;j++){
