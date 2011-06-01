@@ -16,15 +16,15 @@ void MovementScene::setGridBlockSize(int size){
   */
 void MovementScene::drawForeground(QPainter *painter, const QRectF &rect){
     painter->setWorldMatrixEnabled(true);
+    QVarLengthArray<QLineF, 100> linesX;
+    QVarLengthArray<QLineF, 100> linesY;
 
     qreal left = int(rect.left()) - (int(rect.left()) % gridInterval );
     qreal top = int(rect.top()) - (int(rect.top()) % gridInterval );
 
-    QVarLengthArray<QLineF, 100> linesX;
     for (qreal x = left; x < rect.right(); x += gridInterval )
         linesX.append(QLineF(x, rect.top(), x, rect.bottom()));
 
-    QVarLengthArray<QLineF, 100> linesY;
     for (qreal y = top; y < rect.bottom(); y += gridInterval )
         linesY.append(QLineF(rect.left(), y, rect.right(), y));
 

@@ -31,7 +31,13 @@ private slots:
     void on_blockSizeSlider_valueChanged(int value);
     void on_searchWindowSlider_valueChanged(int value);
     void on_actionRun_triggered();
+    void on_actionClear_Vectors_triggered();
     void getMovementLines();
+
+
+    void on_coeficientCheck_toggled(bool checked);
+
+    void on_coeficientInput_returnPressed();
 
 private:
     int blockSize;
@@ -46,8 +52,11 @@ private:
     QGraphicsScene displayScene;
     QGraphicsItem *backgroundImage;
 
+    void clearVectors();
     void loadImages();
     void drawLines();
+    void redrawSearchWindow();
+    void redisplayImage();
 };
 
 #endif // MAINWINDOW_H

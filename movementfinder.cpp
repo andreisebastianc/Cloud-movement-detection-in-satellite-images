@@ -6,7 +6,9 @@ MovementFinder::MovementFinder()
     this->patternSize = 20;
     this->windowSize = 60;
     this->firstFrame = new QImage();
+    this->secondFrame = new QImage();
     this->corelationToUse = Corelations(0);
+    this->duplicatesCounter = 1;
 }
 
 MovementFinder::~MovementFinder(){
@@ -36,27 +38,7 @@ void MovementFinder::setConstraitmentSizes(int patternSize, int windowSize){
     this->windowSize = windowSize;
 }
 
-/**
-  *
-  */
-QPoint MovementFinder::getMovementDestination(QPair<int,int> block){
-    QPoint destionationBlockCoord;
 
-    // get the values of the pixels from the first image into an array
-    for(int block_i = 0 ; block_i < this->patternSize ; block_i++){
-        for(int block_j = 0 ; block_j < this->patternSize ; block_j++){
-            valueFF[block_i][block_j] = qGray(this->firstFrame->pixel(block_i+block.first,block_j+block.second));
-        }
-    }
-
-    switch(this->corelationToUse){
-    case SSD :
-        break;
-    default:
-        break;
-    }
-    return destionationBlockCoord;
-}
 
 /**
   *
@@ -71,40 +53,63 @@ void MovementFinder::run(){
 
             int blocksInWindow = this->windowSize/this->patternSize;
             int totalNumberOfBlocks = this->firstFrame->height()/this->patternSize;
+            QPoint drawFrom, drawTo;
             long sum;
             int valueFF[this->patternSize][this->patternSize], valueSF;
-            int ffModifierX, ffModifierY, sfModifierX, sfModifierY;
+            int ffModifierX, ffModifierY,sfModifierX, sfModifierY;
             int prevSSD;
-            QPoint drawFrom, drawTo;
-            bool mantainsPosition, conflicted;
+            bool mantainsPosition;
             int conflictCounter;
 
+            // goes through each block of the first image
             for(int fframe_i=0;fframe_i<totalNumberOfBlocks;fframe_i++){
                 for(int fframe_j=0;fframe_j<totalNumberOfBlocks;fframe_j++){
 
-                    drawFrom.setX(fframe_i);
-                    drawFrom.setY(fframe_j);
-                    mantainsPosition = true;
-                    conflicted = false;
-                    conflictCounter = 0;
+                    // sets the draw starting point
+
                     prevSSD = 60000;
+                    conflictCounter = 0;
+                    mantainsPosition = true;
+                    sum = 0;
 
-
-                    //qDebug() << "blocul: "<<fframe_i<<", "<<fframe_j;
-
+                    // sets the real coordinates of the top left point of the block in the first image
                     ffModifierX = fframe_i * this->patternSize;
                     ffModifierY = fframe_j * this->patternSize;
+
+                    drawFrom.setX(ffModifierX);
+                    drawFrom.setY(ffModifierY);
+
+                    // fills an array of int with the values of each pixel in block, basically copies a block into an array
                     for(int block_i = 0 ; block_i < this->patternSize ; block_i++){
                         for(int block_j = 0 ; block_j < this->patternSize ; block_j++){
                             valueFF[block_i][block_j] = qGray(this->firstFrame->pixel(block_i+ffModifierX,block_j+ffModifierY));
                         }
                     }
 
+                    // positions the search window X coordinate so it doesn't jump out of the search into image
+                    int windowX = ffModifierX-(this->windowSize-this->patternSize)/2;
+                    if(windowX<0){
+                        windowX = 0;
+                    }
+                    int xBl = this->secondFrame->width()-(ffModifierX+this->patternSize+(this->windowSize-this->patternSize)/2);
+                    if(xBl<0){
+                        windowX += xBl;
+                    }
+
+                    // positions the search window Y coordinate so it doesn't jump out of the search into image
+                    int windowY = ffModifierY-(this->windowSize-this->patternSize)/2;
+                    if(windowY<0){
+                        windowY = 0;
+                    }
+                    xBl = this->secondFrame->height()-(ffModifierY+this->patternSize+(this->windowSize-this->patternSize)/2);
+                    if(xBl<0){
+                        windowY += xBl;
+                    }
 
                     for(int i=0;i<blocksInWindow;i++){
                         for(int j=0;j<blocksInWindow;j++){
-                            sfModifierX = i * this->patternSize;
-                            sfModifierY = j * this->patternSize;
+                            sfModifierX = i * this->patternSize + windowX;
+                            sfModifierY = j * this->patternSize + windowY;
                             sum = 0;
 
                             for(int block_i = 0 ; block_i < this->patternSize ; block_i++){
@@ -133,15 +138,16 @@ void MovementFinder::run(){
                                     mantainsPosition = false;
                                     conflictCounter = 0;
                                     prevSSD = sum;
-                                    drawTo.setX(i);
-                                    drawTo.setY(j);
+                                    drawTo.setX(sfModifierX);
+                                    drawTo.setY(sfModifierY);
                                     //qDebug() << "[" << i <<","<<j<<"]= "<< sum;
                                 }
                             }
                         }
                     }
 
-                    if(!mantainsPosition && conflictCounter==0){
+
+                    if(!mantainsPosition && conflictCounter<=this->duplicatesCounter){
                         QPair<QPoint,QPoint> drawPoints;
                         drawPoints.first = drawFrom;
                         drawPoints.second = drawTo;
@@ -169,4 +175,9 @@ void MovementFinder::start(){
 
 void MovementFinder::stop(){
     this->stopped = true;
+}
+
+void MovementFinder::setCoeficient(int value){
+    this->duplicatesCounter = value;
+    qDebug() << this->duplicatesCounter;
 }

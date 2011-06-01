@@ -12,6 +12,8 @@ MainWindow::MainWindow(QWidget *parent) :
     this->blockSize = ui->blockSizeSlider->value();
     this->windowSize = ui->searchWindowSlider->value();
     this->ui->filesListWidget->setSortingEnabled(true);
+    this->ui->coeficientInput->setText(QString("1"));
+    this->redrawSearchWindow();
 }
 
 MainWindow::~MainWindow()
@@ -40,7 +42,6 @@ void MainWindow::on_addImagesButton_released()
             QListWidgetItem* item = new QListWidgetItem(theFileInfo.fileName(),ui->filesListWidget);
             item->setFlags(Qt::ItemIsSelectable|Qt::ItemIsUserCheckable|Qt::ItemIsEnabled);
             item->setCheckState(Qt::Unchecked);
-            qDebug()<<item->flags();
             ui->filesListWidget->addItem(item);
             this->imagesPath << files.at(i);
         }
@@ -76,6 +77,10 @@ void MainWindow::on_actionRun_triggered(){
     this->finder->start();
 }
 
+void MainWindow::on_actionClear_Vectors_triggered(){
+    this->clearVectors();
+}
+
 void MainWindow::getMovementLines(){
     this->draw = this->finder->getWhatToDraw();
     drawLines();
@@ -83,14 +88,17 @@ void MainWindow::getMovementLines(){
 
 void MainWindow::drawLines(){
     this->displayScene.clear();
-    this->displayScene.addPixmap(this->pixmapObject);
+    this->redisplayImage();
+    this->redrawSearchWindow();
+
     for(int i=0;i<this->draw.size();i++){
         QGraphicsLineItem *line = new QGraphicsLineItem(
-                    this->draw.at(i).first.x()*this->blockSize+this->blockSize/2,
-                    this->draw.at(i).first.y()*this->blockSize+this->blockSize/2,
-                    this->draw.at(i).second.x()*this->blockSize+this->blockSize/2,
-                    this->draw.at(i).second.y()*this->blockSize+this->blockSize/2
+                    this->draw.at(i).first.x()+this->blockSize/2,
+                    this->draw.at(i).first.y()+this->blockSize/2,
+                    this->draw.at(i).second.x()+this->blockSize/2,
+                    this->draw.at(i).second.y()+this->blockSize/2
                     );
+        line->setPen(QPen(Qt::red));
         this->displayScene.addItem(line);
         line->setZValue(100);
     }
@@ -117,4 +125,46 @@ void MainWindow::on_searchWindowSlider_valueChanged(int value)
     this->windowSize = value;
     this->finder->setConstraitmentSizes(this->blockSize,this->windowSize);
     ui->searchWindowLabel->setText("Search window size: "+QString::number(value));
+    this->redrawSearchWindow();
+}
+
+void MainWindow::on_coeficientCheck_toggled(bool checked)
+{
+    if(checked == true){
+        this->ui->coeficientInput->setEnabled(true);
+    }
+    else{
+        this->ui->coeficientInput->setEnabled(false);
+    }
+}
+
+void MainWindow::on_coeficientInput_returnPressed()
+{
+    this->finder->setCoeficient(ui->coeficientInput->text().toInt());
+}
+
+/**
+  *
+  */
+void MainWindow::redrawSearchWindow(){
+    this->displayScene.clear();
+    this->redisplayImage();
+    QGraphicsRectItem* theSearchwindow = new QGraphicsRectItem(
+                0,
+                0,
+                this->windowSize,
+                this->windowSize
+                );
+    theSearchwindow->setPen(QPen(Qt::green));
+    theSearchwindow->setBrush(QBrush(Qt::black,Qt::Dense7Pattern));
+    this->displayScene.addItem(theSearchwindow);
+    theSearchwindow->setZValue(100);
+}
+
+void MainWindow::redisplayImage(){
+    this->displayScene.addPixmap(this->pixmapObject);
+}
+
+void MainWindow::clearVectors(){
+    this->displayScene.clear();
 }

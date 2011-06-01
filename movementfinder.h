@@ -21,6 +21,7 @@ public:
     void setConstraitmentSizes(int patternSize = 20,int windowSize = 60);
     void setFirstFrame(QString firstFrame);
     void setSecondFrame(QString secondFramePath);
+    void setCoeficient(int value=0);
     QList<QPair<QPoint,QPoint> > getWhatToDraw();
 
 private:
@@ -29,12 +30,12 @@ private:
     int windowSize; // the size of the window where to search for matching blocks
     bool firstFrameIsSet;
     bool secondFrameIsSet;
+    int duplicatesCounter;
     Corelations corelationToUse;
-    QImage* firstFrame;
     QImage* secondFrame;
+    QImage* firstFrame;
     QList<QPair<QPoint,QPoint> > toDraw;
 
-    QPoint getMovementDestination(QPair<int,int> block);
 
 protected:
     void run();
