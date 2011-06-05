@@ -36,10 +36,9 @@ void MovementScene::drawForeground(QPainter *painter, const QRectF &rect){
         painter->drawLines(linesX.data(), linesX.size());
         painter->drawLines(linesY.data(), linesY.size());
     }
-    else{
-    }
 }
 
 void MovementScene::setBlockGridVisible(bool visible){
     this->gridIsVisible = visible;
+    this->scene()->invalidate();
 }

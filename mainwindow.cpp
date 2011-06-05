@@ -13,8 +13,11 @@ MainWindow::MainWindow(QWidget *parent) :
     this->windowSize = ui->searchWindowSlider->value();
     this->ui->filesListWidget->setSortingEnabled(true);
     this->ui->coeficientInput->setText(QString("1"));
-    this->redrawSearchWindow();
+    this->drawSearchWindow();
+    this->whomToAddWindowDisplay = QPoint(0,0);
+
     connect(ui->actionGrid,SIGNAL(toggled(bool)),ui->imageDisplayer,SLOT(setBlockGridVisible(bool)));
+    connect(ui->imageDisplayer,SIGNAL(redrawBlockAfterPoint(int,int)),this,SLOT(getDisplayPointForWindow(int,int)));
 }
 
 MainWindow::~MainWindow()
@@ -62,10 +65,12 @@ void MainWindow::on_addImagesButton_released()
 void MainWindow::on_filesListWidget_itemSelectionChanged()
 {
     this->pixmapObject = QPixmap(this->imagesPath.at(ui->filesListWidget->currentRow()));
+    this->ui->searchWindowSlider->setMaximum(this->displayScene.width());
     //qDebug() << this->ui->imageDisplayer->size() <<' '<< pixmapObject.size();
     //pixmapObject = pixmapObject.scaled(ui->imageDisplayer->size(),Qt::KeepAspectRatioByExpanding, Qt::FastTransformation );
-    this->drawLines();
+    //this->drawLines();
     //set image in graphics view
+    this->drawDots();
 }
 
 /** the default run application call
@@ -84,13 +89,37 @@ void MainWindow::on_actionClear_Vectors_triggered(){
 
 void MainWindow::getMovementLines(){
     this->draw = this->finder->getWhatToDraw();
-    drawLines();
+    //drawLines();
+    this->drawDots();
 }
 
+/**
+  *
+  */
+void MainWindow::drawDots(){
+    this->displayScene.clear();
+    this->redisplayImage();
+    this->drawSearchWindow();
+    for(int i=0;i<this->draw.size();i++){
+        QGraphicsRectItem *dot = new QGraphicsRectItem(
+                    this->draw.at(i).first.x()+this->blockSize/2,
+                    this->draw.at(i).first.y()+this->blockSize/2,
+                    1,
+                    1
+                    );
+        dot->setPen(QPen(Qt::red));
+        this->displayScene.addItem(dot);
+        dot->setZValue(100);
+    }
+}
+
+/**
+  *
+  */
 void MainWindow::drawLines(){
     this->displayScene.clear();
     this->redisplayImage();
-    this->redrawSearchWindow();
+    this->drawSearchWindow();
 
     for(int i=0;i<this->draw.size();i++){
         QGraphicsLineItem *line = new QGraphicsLineItem(
@@ -126,7 +155,7 @@ void MainWindow::on_searchWindowSlider_valueChanged(int value)
     this->windowSize = value;
     this->finder->setConstraitmentSizes(this->blockSize,this->windowSize);
     ui->searchWindowLabel->setText("Search window size: "+QString::number(value));
-    this->redrawSearchWindow();
+    this->drawSearchWindow();
 }
 
 void MainWindow::on_coeficientCheck_toggled(bool checked)
@@ -144,15 +173,18 @@ void MainWindow::on_coeficientInput_returnPressed()
     this->finder->setCoeficient(ui->coeficientInput->text().toInt());
 }
 
-/**
+/** @todo for point get block and display scene with block as center
+  * @todo see if possible to remove an item without redrawing them all
+  * @todo maybe just moving the search window would be better than redrawing it
   *
   */
-void MainWindow::redrawSearchWindow(){
+void MainWindow::drawSearchWindow(){
+    qDebug() << this->whomToAddWindowDisplay;
     this->displayScene.clear();
     this->redisplayImage();
     QGraphicsRectItem* theSearchwindow = new QGraphicsRectItem(
-                0,
-                0,
+                this->whomToAddWindowDisplay.x(),
+                this->whomToAddWindowDisplay.y(),
                 this->windowSize,
                 this->windowSize
                 );
@@ -168,4 +200,17 @@ void MainWindow::redisplayImage(){
 
 void MainWindow::clearVectors(){
     this->displayScene.clear();
+}
+
+void MainWindow::getDisplayPointForWindow(int x, int y){
+    this->whomToAddWindowDisplay = QPoint(x,y);
+    int horSide = (ui->imageDisplayer->width() -ui->imageDisplayer->scene()->width()) / 2;
+    int vertSide = (ui->imageDisplayer->height() -ui->imageDisplayer->scene()->height()) / 2;
+    x = x- horSide;
+    y = y- vertSide;
+    if(x > 0 && x < ui->imageDisplayer->scene()->width() && y > 0 && y < ui->imageDisplayer->scene()->height()){
+        this->whomToAddWindowDisplay.setX(x);
+        this->whomToAddWindowDisplay.setY(y);
+        this->drawSearchWindow();
+    }
 }

@@ -33,6 +33,7 @@ private slots:
     void on_actionRun_triggered();
     void on_actionClear_Vectors_triggered();
     void getMovementLines();
+    void getDisplayPointForWindow(int x, int y);
 
 
     void on_coeficientCheck_toggled(bool checked);
@@ -43,6 +44,7 @@ private:
     int blockSize;
     int windowSize;
     QList<QPair<QPoint,QPoint> > draw;
+    QPoint whomToAddWindowDisplay;
 
     Ui::MainWindow *ui;
     //ImagesHandler* imageHandler;
@@ -55,7 +57,8 @@ private:
     void clearVectors();
     void loadImages();
     void drawLines();
-    void redrawSearchWindow();
+    void drawDots();
+    void drawSearchWindow();
     void redisplayImage();
 };
 

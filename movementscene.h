@@ -4,6 +4,7 @@
 #include <QGraphicsView>
 #include <QVarLengthArray>
 #include <QWheelEvent>
+#include <QDebug>
 #include <math.h>
 
 class MovementScene : public QGraphicsView
@@ -15,6 +16,7 @@ public:
 protected:
     void drawForeground(QPainter *painter, const QRectF &rect);
     void wheelEvent(QWheelEvent *event) { scaleBy(pow(4.0/3.0,(-event->delta()/240.0)));}
+    void mousePressEvent(QMouseEvent *event) { emit redrawBlockAfterPoint(event->x(),event->y()); }
 
 private:
     int gridInterval;
@@ -22,6 +24,7 @@ private:
     void scaleBy(double factor) { scale(factor,factor);}
 
 signals:
+    void redrawBlockAfterPoint(int x, int y);
 
 public slots:
     void setBlockGridVisible(bool visible=true);
