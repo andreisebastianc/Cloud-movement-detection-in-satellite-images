@@ -14,6 +14,7 @@ MainWindow::MainWindow(QWidget *parent) :
     this->ui->filesListWidget->setSortingEnabled(true);
     this->ui->coeficientInput->setText(QString("1"));
     this->redrawSearchWindow();
+    connect(ui->actionGrid,SIGNAL(toggled(bool)),ui->imageDisplayer,SLOT(setBlockGridVisible(bool)));
 }
 
 MainWindow::~MainWindow()
