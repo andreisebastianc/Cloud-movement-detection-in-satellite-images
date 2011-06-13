@@ -6,16 +6,31 @@
 #include <QDebug>
 #include <QFileInfo>
 #include <QList>
+#include <QVector>
 #include <QString>
 #include <QListWidgetItem>
 #include <QGraphicsScene>
 #include <QGraphicsItem>
+#include <QHash>
 #include "imageshandler.h"
-#include "movementfinder.h"
+#include "fullsearch.h"
 
 namespace Ui {
     class MainWindow;
 }
+
+enum SetDisplay{
+    NoItemFlags = 0,
+    Image = 1,
+    MovementDots = 2,
+    MovementLines = 4,
+    SearchWindow = 8
+};
+
+struct Movement{
+    QPair<int,int> bestFit;
+    QVector<QPair<int,int> > candidateFits;
+};
 
 class MainWindow : public QMainWindow
 {
@@ -24,6 +39,9 @@ class MainWindow : public QMainWindow
 public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
+    void setFlags(int flags);
+    void updateDisplay();
+    void updateDisplay(int flags);
 
 private slots:
     void on_addImagesButton_released();
@@ -33,7 +51,7 @@ private slots:
     void on_actionRun_triggered();
     void on_actionClear_Vectors_triggered();
     void getMovementLines();
-    void getDisplayPointForWindow(int x, int y);
+    void drawSearchWindow(int x, int y);
 
 
     void on_coeficientCheck_toggled(bool checked);
@@ -43,13 +61,14 @@ private slots:
 private:
     int blockSize;
     int windowSize;
+    int flags;
     QList<QPair<QPoint,QPoint> > draw;
-    QPoint whomToAddWindowDisplay;
+    QHash<QPair<int,int>, QVector<QList<Movement*> > > allTheMovementData;
 
     Ui::MainWindow *ui;
-    //ImagesHandler* imageHandler;
-    MovementFinder* finder;
+    FullSearch* finder;
     QList<QString> imagesPath;
+    QList<QImage*> images;
     QPixmap pixmapObject;
     QGraphicsScene displayScene;
     QGraphicsItem *backgroundImage;
@@ -58,7 +77,6 @@ private:
     void loadImages();
     void drawLines();
     void drawDots();
-    void drawSearchWindow();
     void redisplayImage();
 };
 

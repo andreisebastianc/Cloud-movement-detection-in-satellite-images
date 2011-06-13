@@ -13,12 +13,14 @@ TEMPLATE = app
 SOURCES += main.cpp\
         mainwindow.cpp \
     imageshandler.cpp \
-    movementfinder.cpp \
-    movementscene.cpp
+    movementscene.cpp \
+    blockmatching.cpp \
+    fullsearch.cpp
 
 HEADERS  += mainwindow.h \
     imageshandler.h \
-    movementfinder.h \
-    movementscene.h
+    movementscene.h \
+    blockmatching.h \
+    fullsearch.h
 
 FORMS    += mainwindow.ui
