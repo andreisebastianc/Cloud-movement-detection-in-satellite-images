@@ -15,12 +15,14 @@ SOURCES += main.cpp\
     imageshandler.cpp \
     movementscene.cpp \
     blockmatching.cpp \
-    fullsearch.cpp
+    fullsearch.cpp \
+    hexagonalsearch.cpp
 
 HEADERS  += mainwindow.h \
     imageshandler.h \
     movementscene.h \
     blockmatching.h \
-    fullsearch.h
+    fullsearch.h \
+    hexagonalsearch.h
 
 FORMS    += mainwindow.ui
