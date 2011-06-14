@@ -3,6 +3,7 @@
 HexagonalSearch::HexagonalSearch()
 {
     this->bigHexagonSpread = 2;
+    this->smallHexagonSpread = 1;
     this->stopped = false;
     this->blockSize = 20;
     this->searchWindowSize = 60;
@@ -18,15 +19,13 @@ HexagonalSearch::~HexagonalSearch(){
 void HexagonalSearch::run(){
     if(this->firstFrameIsSet && this->secondFrameIsSet){
 
-
-        int blocksInWindow = this->searchWindowSize/this->blockSize;
         int numberOfBlocks_X = this->firstFrame->width() / this->blockSize;
         int numberOfBlocks_Y = this->firstFrame->height() / this->blockSize;
 
         long sum;
         int currentBlockPreparedVals[this->blockSize][this->blockSize], valuesInTestedBlock;
         int currentBlock_x, currentBlock_y,blockTested_x, blockTested_y;
-        int currentBlock_centX, currentBlock_centY, blockTested_centX, blockTested_centY;
+        int currentBlock_centX, currentBlock_centY;
         int searchWindow_x, searchWindow_y;
         long prevSSD;
         bool mantainsPosition;
@@ -136,10 +135,31 @@ void HexagonalSearch::run(){
                     }
                     //for the center
                     //set so it prefers staying at center
+                    //SMALL HEXAGON
                     if(bigHexagon.centerSSD <= prevSSD){
                         //if the one at center, build small hexagon
+                        QList<QPoint> newSmallHexa = this->getSmallHexagonPoints(bigHexagon.center);
                         //compare and give result the best fit of the small hexagon points
+                        for(int j=0;j<newSmallHexa.size();j++){
+                            blockTested_x = newSmallHexa.at(j).x()- this->blockSize/2;
+                            blockTested_y = newSmallHexa.at(j).y() - this->blockSize/2;
+                            for(int block_i = 0 ; block_i < this->blockSize ; block_i++){
+                                for(int block_j = 0 ; block_j < this->blockSize ; block_j++){
+                                    if(blockTested_x > 0 && blockTested_x < this->secondFrame->width()-this->blockSize
+                                            && blockTested_y>0 && blockTested_y < this->secondFrame->height()-this->blockSize){
+                                        valuesInTestedBlock = currentBlockPreparedVals[block_i][block_j] -qGray(this->secondFrame->pixel(block_i+blockTested_x,block_j+blockTested_y));
+                                        sum += valuesInTestedBlock * valuesInTestedBlock;
+                                    }
+                                }
+                            }
+                            if(bigHexagon.centerSSD > sum){
+                                drawTo.setX(blockTested_x);
+                                drawTo.setY(blockTested_y);
+                                bigHexagon.centerSSD = sum;
+                            }
+                        }
                         //else move the center of the hexagon at the smallest difference
+
                         resultFound = true;
                     }
                     else{ //center has bigger SSD than a side => rebuild the hexagon
@@ -174,6 +194,15 @@ QList<QPoint> HexagonalSearch::getBigHexagonPoints(QPoint center){
     toReturn << QPoint(center.x()+(this->bigHexagonSpread*this->blockSize)/2,center.y()-this->bigHexagonSpread*this->blockSize);
     toReturn << QPoint(center.x()-(this->bigHexagonSpread*this->blockSize)/2,center.y()+this->bigHexagonSpread*this->blockSize);
     toReturn << QPoint(center.x()+(this->bigHexagonSpread*this->blockSize)/2,center.y()+this->bigHexagonSpread*this->blockSize);
+    return toReturn;
+}
+
+QList<QPoint> HexagonalSearch::getSmallHexagonPoints(QPoint center){
+    QList<QPoint> toReturn;
+    toReturn << QPoint(center.x()-(this->bigHexagonSpread*this->blockSize)/2,center.y());
+    toReturn << QPoint(center.x()+(this->bigHexagonSpread*this->blockSize)/2,center.y());
+    toReturn << QPoint(center.x(),center.y()-(this->bigHexagonSpread*this->blockSize)/2);
+    toReturn << QPoint(center.x(),center.y()-(this->bigHexagonSpread*this->blockSize)/2);
     return toReturn;
 }
 

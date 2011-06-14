@@ -12,8 +12,9 @@
 #include <QGraphicsScene>
 #include <QGraphicsItem>
 #include <QHash>
-#include "imageshandler.h"
+//#include "imageshandler.h"
 #include "fullsearch.h"
+#include "hexagonalsearch.h"
 
 namespace Ui {
     class MainWindow;
@@ -66,7 +67,8 @@ private:
     QHash<QPair<int,int>, QVector<QList<Movement*> > > allTheMovementData;
 
     Ui::MainWindow *ui;
-    FullSearch* finder;
+    FullSearch* fullFinder;
+    HexagonalSearch* hexFinder;
     QList<QString> imagesPath;
     QList<QImage*> images;
     QPixmap pixmapObject;

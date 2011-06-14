@@ -8,12 +8,14 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
     this->displayScene.setBackgroundBrush(QBrush(QColor(230,230,230)));
     ui->imageDisplayer->setScene(&this->displayScene);
-    this->finder = new FullSearch();
     this->blockSize = ui->blockSizeSlider->value();
     this->windowSize = ui->searchWindowSlider->value();
     this->ui->filesListWidget->setSortingEnabled(true);
     this->ui->coeficientInput->setText(QString("1"));
     this->drawSearchWindow(0,0);
+
+    this->fullFinder = new FullSearch();
+    this->hexFinder = new HexagonalSearch();
     //set display flags
     this->setFlags(MovementLines|SearchWindow|Image);
 
@@ -26,7 +28,7 @@ MainWindow::~MainWindow()
 {
     delete ui;
     //delete this->imageHandler;
-    delete this->finder;
+    delete this->fullFinder;
     while(!this->images.empty()){
         delete this->images.takeFirst();
     }
@@ -130,10 +132,14 @@ void MainWindow::on_filesListWidget_itemSelectionChanged()
   *
   */
 void MainWindow::on_actionRun_triggered(){
-    this->finder->setFirstFrame(new QImage(this->imagesPath.at(0)));
-    this->finder->setSecondFrame(this->imagesPath.at(1));
-    connect(this->finder,SIGNAL(operationsComplete()),this,SLOT(getMovementLines()));
-    this->finder->start();
+//    this->fullFinder->setFirstFrame(new QImage(this->imagesPath.at(0)));
+//    this->fullFinder->setSecondFrame(this->imagesPath.at(1));
+//    connect(this->fullFinder,SIGNAL(operationsComplete()),this,SLOT(getMovementLines()));
+//    this->fullFinder->start();
+    this->hexFinder->setFirstFrame(new QImage(this->imagesPath.at(0)));
+    this->hexFinder->setSecondFrame(this->imagesPath.at(1));
+    connect(this->hexFinder,SIGNAL(operationsComplete()),this,SLOT(getMovementLines()));
+    this->hexFinder->start();
 }
 
 void MainWindow::on_actionClear_Vectors_triggered(){
@@ -144,7 +150,7 @@ void MainWindow::on_actionClear_Vectors_triggered(){
   *
   */
 void MainWindow::getMovementLines(){
-    this->draw = this->finder->getWhatToDraw();
+    this->draw = this->fullFinder->getWhatToDraw();
     this->updateDisplay(MovementDots|SearchWindow|Image);
 }
 
@@ -190,7 +196,7 @@ void MainWindow::drawLines(){
 void MainWindow::on_blockSizeSlider_valueChanged(int value)
 {
     this->blockSize = value;
-    this->finder->setConstraitmentSizes(this->blockSize,this->windowSize);
+    this->fullFinder->setConstraitmentSizes(this->blockSize,this->windowSize);
     this->ui->imageDisplayer->setGridBlockSize(value);
     ui->blockSizeLabel->setText("Block size: "+QString::number(value));
 }
@@ -202,7 +208,7 @@ void MainWindow::on_blockSizeSlider_valueChanged(int value)
 void MainWindow::on_searchWindowSlider_valueChanged(int value)
 {
     this->windowSize = value;
-    this->finder->setConstraitmentSizes(this->blockSize,this->windowSize);
+    this->fullFinder->setConstraitmentSizes(this->blockSize,this->windowSize);
     ui->searchWindowLabel->setText("Search window size: "+QString::number(value));
     this->drawSearchWindow(0,0);
 }
@@ -219,7 +225,7 @@ void MainWindow::on_coeficientCheck_toggled(bool checked)
 
 void MainWindow::on_coeficientInput_returnPressed()
 {
-    this->finder->setCoeficient(ui->coeficientInput->text().toInt());
+    this->fullFinder->setCoeficient(ui->coeficientInput->text().toInt());
 }
 
 

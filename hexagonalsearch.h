@@ -32,10 +32,12 @@ public:
 
 private:
     short bigHexagonSpread;
-    QList<QPoint> getBigHexagonPoints(QPoint center);
+    short smallHexagonSpread;
     volatile bool stopped;
     Hexagon bigHexagon;
     Hexagon smallHexagon;
+    QList<QPoint> getBigHexagonPoints(QPoint center);
+    QList<QPoint> getSmallHexagonPoints(QPoint center);
 
 protected:
     void run();
