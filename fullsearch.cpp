@@ -18,7 +18,7 @@ void FullSearch::run(){
     if(this->firstFrameIsSet && this->secondFrameIsSet){
 
 
-        int blocksInWindow = this->searchWindowSize/this->blockSize;
+        int blocksInWindow = this->searchWindowSize - this->blockSize;
         int numberOfBlocks_X = this->firstFrame->width() / this->blockSize;
         int numberOfBlocks_Y = this->firstFrame->height() / this->blockSize;
 
@@ -63,8 +63,8 @@ void FullSearch::run(){
 
                 for(int i=0;i<blocksInWindow;i++){
                     for(int j=0;j<blocksInWindow;j++){
-                        blockTested_x = i * this->blockSize + searchWindow_x;
-                        blockTested_y = j * this->blockSize + searchWindow_y;
+                        blockTested_x = i  + searchWindow_x;
+                        blockTested_y = j  + searchWindow_y;
                         sum = 0;
 
                         for(int block_i = 0 ; block_i < this->blockSize ; block_i++){

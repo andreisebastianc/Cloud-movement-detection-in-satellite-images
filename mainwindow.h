@@ -15,6 +15,7 @@
 //#include "imageshandler.h"
 #include "fullsearch.h"
 #include "hexagonalsearch.h"
+#include "rhombussearch.h"
 
 namespace Ui {
     class MainWindow;
@@ -49,15 +50,12 @@ private slots:
     void on_filesListWidget_itemSelectionChanged();
     void on_blockSizeSlider_valueChanged(int value);
     void on_searchWindowSlider_valueChanged(int value);
+    void on_diamondBigSize_valueChanged(int value);
+    void on_diamondSmallSize_valueChanged(int value);
     void on_actionRun_triggered();
     void on_actionClear_Vectors_triggered();
     void getMovementLines();
     void drawSearchWindow(int x, int y);
-
-
-    void on_coeficientCheck_toggled(bool checked);
-
-    void on_coeficientInput_returnPressed();
 
 private:
     int blockSize;
@@ -67,13 +65,15 @@ private:
     QHash<QPair<int,int>, QVector<QList<Movement*> > > allTheMovementData;
 
     Ui::MainWindow *ui;
-    FullSearch* fullFinder;
-    HexagonalSearch* hexFinder;
     QList<QString> imagesPath;
     QList<QImage*> images;
     QPixmap pixmapObject;
     QGraphicsScene displayScene;
     QGraphicsItem *backgroundImage;
+
+    FullSearch* fullFinder;
+    HexagonalSearch* hexFinder;
+    RhombusSearch* rhombusFinder;
 
     void clearVectors();
     void loadImages();

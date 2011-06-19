@@ -16,11 +16,6 @@ struct Hexagon{
     QHash<QPoint,int> points;
 };
 
-inline uint qHash(const QPoint& p)
-{
-    return qHash(p.x()+p.y());
-}
-
 class HexagonalSearch : public QThread, public BlockMatching
 {
     Q_OBJECT

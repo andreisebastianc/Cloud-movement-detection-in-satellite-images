@@ -13,23 +13,25 @@ BlockMatching::~BlockMatching(){
   *
   */
 void BlockMatching::setFirstFrame(QString firstFramePath){
+    this->firstFrameIsSet = true;
     this->firstFrameIsSet = this->firstFrame->load(firstFramePath);
 }
 
 void BlockMatching::setFirstFrame(QImage *firstFrame){
-    this->firstFrame = firstFrame;
     this->firstFrameIsSet = true;
+    this->firstFrame = firstFrame;
 }
 
 /**
   *
   */
 void BlockMatching::setSecondFrame(QString secondFramePath){
-    this->secondFrameIsSet = this->secondFrame->load(secondFramePath);
     this->secondFrameIsSet = true;
+    this->secondFrameIsSet = this->secondFrame->load(secondFramePath);
 }
 
 void BlockMatching::setSecondFrame(QImage *secondFrame){
+    this->secondFrameIsSet = true;
     this->secondFrame = secondFrame;
 }
 

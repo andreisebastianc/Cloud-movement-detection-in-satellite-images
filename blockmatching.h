@@ -7,6 +7,11 @@
 #include <QPair>
 #include <QDebug>
 
+inline uint qHash(const QPoint& p)
+{
+    return qHash(p.x()+p.y());
+}
+
 class BlockMatching
 {
 public:
