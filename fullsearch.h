@@ -14,7 +14,7 @@ class FullSearch :  public BlockMatching
     Q_OBJECT
 
 public:
-    explicit FullSearch(OperationType type=NormalOperation);
+    explicit FullSearch(QList<QPair<QPoint,QVector<QPoint> > >* CBFPoints,OperationType type=NormalOperation);
     ~FullSearch();
     void start();
     void stop();

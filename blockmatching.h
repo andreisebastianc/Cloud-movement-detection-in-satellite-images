@@ -32,7 +32,7 @@ class BlockMatching :public QThread
 public:
     BlockMatching();
     virtual ~BlockMatching();
-    void setConstraitmentSizes(int blockSize = 20,int searchWindowSize = 60);
+    void setConstraitmentSizes(int blockSize = 7,int searchWindowSize = 35);
     void setFirstFrame(QString firstFramePath);
     void setSecondFrame(QString secondFramePath);
     void setFirstFrame(QImage* firstFrame);
@@ -40,6 +40,7 @@ public:
     void setCoeficient(int value=0);
     void setHistorySize(int value = 3);
     void setOperationType(OperationType type = NormalOperation);
+    OperationType getOperationType() {return this->operationType;}
     QList<QPair<QPoint,QPoint> > getWhatToDraw();
 
 protected:
@@ -54,10 +55,10 @@ protected:
     QImage* secondFrame;
     QImage* firstFrame;
     QList<QPair<QPoint,QPoint> > toDraw;
-    QList<QPair<QPoint,QVector<QPoint> > > candidatePoints;
+    QList<QPair<QPoint,QVector<QPoint> > >* candidatePoints;
     OperationType operationType;
     short historySize;
-    QVector<QPair<QPoint,int> > localCandidateBestFits;
+    QVector<QPair<QPoint,int> >* localCandidateBestFits;
 };
 
 #endif // BLOCKMATCHING_H

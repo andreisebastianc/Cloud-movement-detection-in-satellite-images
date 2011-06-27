@@ -3,7 +3,7 @@
 MovementScene::MovementScene(QWidget *parent) :
     QGraphicsView(parent)
 {
-    this->gridInterval = 20;
+    this->gridInterval = 7;
     this->gridIsVisible = true;
     setDragMode(RubberBandDrag);
     setRenderHints(QPainter::Antialiasing);

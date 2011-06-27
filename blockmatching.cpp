@@ -3,12 +3,13 @@
 BlockMatching::BlockMatching() : QThread()
 {
     this->cbfSize = 3;
-    this->localCandidateBestFits = QVector<QPair<QPoint,int> >(this->cbfSize-1);
 }
 
 BlockMatching::~BlockMatching(){
     delete this->firstFrame;
     delete this->secondFrame;
+    delete this->candidatePoints;
+    delete this->localCandidateBestFits;
 }
 
 

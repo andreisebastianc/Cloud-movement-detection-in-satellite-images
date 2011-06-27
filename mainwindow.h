@@ -71,7 +71,8 @@ private:
     short flags;
     short currentFrame;
     bool operationComplete;
-    QVector<QList<QPair<QPoint,QPoint> > > draw;
+    QVector<QList<QPair<QPoint,QPoint> > >* draw;
+    QList<QPair<QPoint,QVector<QPoint> > >* cbfPoints;
 
     Ui::MainWindow *ui;
     QList<QString> imagesPath;

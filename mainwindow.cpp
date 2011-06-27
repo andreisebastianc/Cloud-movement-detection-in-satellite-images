@@ -14,10 +14,11 @@ MainWindow::MainWindow(QWidget *parent) :
     this->ui->filesListWidget->setSortingEnabled(true);
     this->drawSearchWindow(0,0);
 
-    this->fullFinder = new FullSearch();
+    this->draw = new QVector<QList<QPair<QPoint,QPoint> > >();
+    this->fullFinder = new FullSearch(this->cbfPoints);
     this->hexFinder = new HexagonalSearch();
     this->rhombusFinder = new RhombusSearch();
-    this->improvedFinder = new ImproveSearch();
+    this->improvedFinder = new ImproveSearch(this->draw,this->cbfPoints);
 
     //set display flags
     this->setFlags(MovementLines|SearchWindow|Image);
@@ -52,6 +53,7 @@ void MainWindow::setFlags(int flags){
   *
   */
 void MainWindow::updateDisplay(){
+    this->displayScene.clear();
     if(this->flags&Image){
         this->redisplayImage();
     }
@@ -140,7 +142,8 @@ void MainWindow::on_addImagesButton_released()
   *
   */
 void MainWindow::on_actionRun_triggered(){
-    this->draw.clear();
+    this->draw->clear();
+    this->cbfPoints->clear();
     switch(this->ui->searchTypeSelect->currentIndex()){
     default:
         break;
@@ -184,18 +187,21 @@ void MainWindow::on_actionClear_Vectors_triggered(){
 void MainWindow::getMovementLines(){
     switch(this->ui->searchTypeSelect->currentIndex()){
     case 0:
-        this->draw.append(this->fullFinder->getWhatToDraw());
+        this->draw->append(this->fullFinder->getWhatToDraw());
         break;
     case 1:
-        this->draw.append(this->rhombusFinder->getWhatToDraw());
+        this->draw->append(this->rhombusFinder->getWhatToDraw());
         break;
     case 2:
-        this->draw.append(this->hexFinder->getWhatToDraw());
+        this->draw->append(this->hexFinder->getWhatToDraw());
         break;
     }
 
     this->updateDisplay(MovementDots|SearchWindow|Image);
     this->operationComplete = true;
+    if(this->fullFinder->getOperationType() == ImprovedOperation){
+        this->improvedFinder->run();
+    }
 }
 
 /**
@@ -203,10 +209,10 @@ void MainWindow::getMovementLines(){
   */
 void MainWindow::drawDots(){
     this->drawSearchWindow(0,0);
-    for(int i=0;i<this->draw[this->currentFrame].size();i++){
+    for(int i=0;i<this->draw->at(this->currentFrame).size();i++){
         QGraphicsRectItem *dot = new QGraphicsRectItem(
-                    this->draw[this->currentFrame].at(i).first.x()+this->blockSize/2,
-                    this->draw[this->currentFrame].at(i).first.y()+this->blockSize/2,
+                    this->draw->at(this->currentFrame).at(i).first.x()+this->blockSize/2,
+                    this->draw->at(this->currentFrame).at(i).first.y()+this->blockSize/2,
                     1,
                     1
                     );
@@ -220,12 +226,12 @@ void MainWindow::drawDots(){
   *
   */
 void MainWindow::drawLines(){
-    for(int i=0;i<this->draw[this->currentFrame].size();i++){
+    for(int i=0;i<this->draw->at(this->currentFrame).size();i++){
         QGraphicsLineItem *line = new QGraphicsLineItem(
-                    this->draw[this->currentFrame].at(i).first.x()+this->blockSize/2,
-                    this->draw[this->currentFrame].at(i).first.y()+this->blockSize/2,
-                    this->draw[this->currentFrame].at(i).second.x()+this->blockSize/2,
-                    this->draw[this->currentFrame].at(i).second.y()+this->blockSize/2
+                    this->draw->at(this->currentFrame).at(i).first.x()+this->blockSize/2,
+                    this->draw->at(this->currentFrame).at(i).first.y()+this->blockSize/2,
+                    this->draw->at(this->currentFrame).at(i).second.x()+this->blockSize/2,
+                    this->draw->at(this->currentFrame).at(i).second.y()+this->blockSize/2
                     );
         line->setPen(QPen(Qt::red));
         this->displayScene.addItem(line);
@@ -325,13 +331,14 @@ void MainWindow::drawSearchWindow(int x, int y){
             theSearchwindow->setZValue(100);
 
             if(this->operationComplete){
-                for(int i=0;i<this->draw[this->currentFrame/2].size();i++){
-                    if(this->draw[this->currentFrame].at(i).first.x() == point_x && this->draw[0].at(i).first.y() == point_y){
+                for(int i=0;i<this->draw[this->currentFrame].size();i++){
+                    if(this->draw->at(this->currentFrame).at(i).first.x() == point_x &&
+                            this->draw->at(this->currentFrame).at(i).first.y() == point_y){
                         QGraphicsLineItem *line = new QGraphicsLineItem(
-                                    this->draw[this->currentFrame/2].at(i).first.x()+this->blockSize/2,
-                                    this->draw[this->currentFrame/2].at(i).first.y()+this->blockSize/2,
-                                    this->draw[this->currentFrame/2].at(i).second.x()+this->blockSize/2,
-                                    this->draw[this->currentFrame/2].at(i).second.y()+this->blockSize/2
+                                    this->draw->at(this->currentFrame).at(i).first.x()+this->blockSize/2,
+                                    this->draw->at(this->currentFrame).at(i).first.y()+this->blockSize/2,
+                                    this->draw->at(this->currentFrame).at(i).second.x()+this->blockSize/2,
+                                    this->draw->at(this->currentFrame).at(i).second.y()+this->blockSize/2
                                     );
                         line->setPen(QPen(Qt::red));
                         this->displayScene.addItem(line);
@@ -374,10 +381,6 @@ void MainWindow::on_useImportantCheckBox_toggled(bool checked)
 }
 
 void MainWindow::exportResults(){
-    if(this->operationComplete){
-        for(int i=0;i<this->draw.count();i++){
-        }
-    }
 }
 
 void MainWindow::on_filesListWidget_currentRowChanged(int currentRow){
