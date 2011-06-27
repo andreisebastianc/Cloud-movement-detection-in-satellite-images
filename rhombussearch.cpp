@@ -52,6 +52,7 @@ void RhombusSearch::run(){
                 drawFrom.setY(currentBlock_centY);
                 //set the center of the big hexagon
                 rhombus.center = drawFrom;
+                rhombus.centerSSD = -1;
 
                 // fills an array of int with the values of each pixel in block,
                 // basically calculates the gray values of the current block
@@ -69,7 +70,6 @@ void RhombusSearch::run(){
                 //hexagonal search in the search window for matching block
 
                 while(!resultFound){
-                    sum = 0;
                     //build the big rhombus by getting the points that make it
                     //get big hexagon points
                     QList<QPoint> newHexa = this->getRhombusPoints(rhombus.center);
@@ -77,11 +77,14 @@ void RhombusSearch::run(){
                     QHash<QPoint,int> newPoints;
                     //insert the new points with SSD -1 to be calculated at next run
                     for(int i=0;i<newHexa.size();i++){
-                        if(!rhombus.points.contains(newHexa.at(i))){
-                            newPoints.insert(newHexa.at(i),-1);
-                        }
-                        else{
-                            newPoints.insert(newHexa.at(i),this->rhombus.points.value(newHexa.at(i)));
+                        //check that the point is inside the search window, otherwise don't use it
+                        if(pointInSearchWindow(newHexa.at(i),QPoint(searchWindow_x,searchWindow_y))){
+                            if(!rhombus.points.contains(newHexa.at(i))){
+                                newPoints.insert(newHexa.at(i),-1);
+                            }
+                            else{
+                                newPoints.insert(newHexa.at(i),this->rhombus.points.value(newHexa.at(i)));
+                            }
                         }
                     }
                     this->rhombus.points.clear();
@@ -90,18 +93,22 @@ void RhombusSearch::run(){
                     //and calculate ssd for each point to store in the hexagon data structure
 
                     //ssd for the center point
-                    blockTested_x = rhombus.center.x() - this->blockSize/2;
-                    blockTested_y = rhombus.center.y() - this->blockSize/2;
-                    for(int block_i = 0 ; block_i < this->blockSize ; block_i++){
-                        for(int block_j = 0 ; block_j < this->blockSize ; block_j++){
-                            if(blockTested_x > 0 && blockTested_x < this->secondFrame->width()-this->blockSize
-                                    && blockTested_y>0 && blockTested_y < this->secondFrame->height()-this->blockSize){
-                                valuesInTestedBlock = currentBlockPreparedVals[block_i][block_j] -qGray(this->secondFrame->pixel(block_i+blockTested_x,block_j+blockTested_y));
-                                sum += valuesInTestedBlock * valuesInTestedBlock;
+                    //only if the value is not set
+                    if(rhombus.centerSSD == -1){
+                        blockTested_x = rhombus.center.x() - this->blockSize/2;
+                        blockTested_y = rhombus.center.y() - this->blockSize/2;
+                        for(int block_i = 0 ; block_i < this->blockSize ; block_i++){
+                            for(int block_j = 0 ; block_j < this->blockSize ; block_j++){
+                                if(blockTested_x > 0 && blockTested_x < this->secondFrame->width()-this->blockSize
+                                        && blockTested_y>0 && blockTested_y < this->secondFrame->height()-this->blockSize){
+                                    valuesInTestedBlock = currentBlockPreparedVals[block_i][block_j] -qGray(this->secondFrame->pixel(block_i+blockTested_x,block_j+blockTested_y));
+                                    sum += valuesInTestedBlock * valuesInTestedBlock;
+                                }
                             }
                         }
+                        rhombus.centerSSD = sum;
+                        prevSSD = rhombus.centerSSD;
                     }
-                    rhombus.centerSSD = sum;
 
                     //ssd for the points stored in the QHash
                     /**
@@ -120,7 +127,7 @@ void RhombusSearch::run(){
                             //calculate ssd for the current block
                             for(int block_i = 0 ; block_i < this->blockSize ; block_i++){
                                 for(int block_j = 0 ; block_j < this->blockSize ; block_j++){
-                                    //check if block is out of bonds
+                                    //check if block is out of image bonds
                                     if(blockTested_x > 0 && blockTested_x < this->secondFrame->width()-this->blockSize
                                             && blockTested_y>0 && blockTested_y < this->secondFrame->height()-this->blockSize){
                                         //if block is valid calculate the ssd
@@ -137,16 +144,19 @@ void RhombusSearch::run(){
 
                     //check the closest value - the smallest stored sum
                     //from the QHash values
-                    while (i != rhombus.points.constEnd()) {
+                    i = rhombus.points.begin();
+                    while (i != rhombus.points.end()) {
                         if(prevSSD > i.value()){
                             prevSSD = i.value();
                             drawTo = i.key();
                         }
+                        ++i;
                     }
 
                     //set so it prefers staying at center
                     //small rhombus
                     if(rhombus.centerSSD <= prevSSD){
+                        drawTo = rhombus.center;
                         //if the one at center, build small hexagon
                         QList<QPoint> newSmallRhombus = this->getRhombusPoints(rhombus.center,SmallRhombus);
                         //compare and give result the best fit of the small hexagon points
@@ -170,31 +180,33 @@ void RhombusSearch::run(){
                                 rhombus.centerSSD = sum;
                             }
                         }
+                        resultFound = true;
                     }
                     else{ //center has bigger SSD than a side => rebuild the hexagon
                         //add the old center in the QHash
                         rhombus.points.insert(rhombus.center,rhombus.centerSSD);
 
-
                         //new center - gets the ssd value and removed from the hexagon
                         rhombus.center = drawTo;
                         rhombus.centerSSD = rhombus.points.value(drawTo);
+                        prevSSD = rhombus.centerSSD;
                         rhombus.points.remove(drawTo);
                     }
                 }
 
-                QPair<QPoint,QPoint> drawPoints;
-                drawPoints.first = drawFrom;
-                drawPoints.second = drawTo;
-                this->toDraw.append(drawPoints);
-
+                if(drawFrom.x() != drawTo.x() && drawFrom.y() != drawTo.y()){
+                    QPair<QPoint,QPoint> drawPoints;
+                    drawPoints.first = drawFrom;
+                    drawPoints.second = drawTo;
+                    this->toDraw.append(drawPoints);
+                }
             }
         }
     }
     emit operationsComplete();
 }
 
-QList<QPoint> RhombusSearch::getRhombusPoints(QPoint center,RhombusType type){
+QList<QPoint> RhombusSearch::getRhombusPoints(QPoint center,ObjectType type){
     QList<QPoint> toReturn;
     switch(type){
         case BigRhombus:
@@ -230,13 +242,15 @@ void RhombusSearch::stop(){
     this->stopped = true;
 }
 
-void RhombusSearch::setSize(int newSize, RhombusType type){
+void RhombusSearch::setSize(int newSize, ObjectType type){
     switch(type){
     case BigRhombus:
         this->bigRhombusSpread = newSize;
         break;
     case SmallRhombus:
         this->smallRhombusSpread = newSize;
+        break;
+    default:
         break;
     }
 }

@@ -1,13 +1,16 @@
 #include "blockmatching.h"
 
-BlockMatching::BlockMatching()
+BlockMatching::BlockMatching() : QThread()
 {
+    this->cbfSize = 3;
+    this->localCandidateBestFits = QVector<QPair<QPoint,int> >(this->cbfSize-1);
 }
 
 BlockMatching::~BlockMatching(){
     delete this->firstFrame;
     delete this->secondFrame;
 }
+
 
 /**
   *
@@ -50,4 +53,20 @@ QList<QPair<QPoint,QPoint> > BlockMatching::getWhatToDraw(){
 void BlockMatching::setCoeficient(int value){
     this->duplicatesCounter = value;
     qDebug() << this->duplicatesCounter;
+}
+
+bool BlockMatching::pointInSearchWindow(QPoint point, QPoint searchWindow_Top_Left_Coord){
+    if(point.x() < searchWindow_Top_Left_Coord.x() || point.x() > searchWindow_Top_Left_Coord.x()+this->searchWindowSize)
+        return false;
+    if(point.y() < searchWindow_Top_Left_Coord.y() || point.x() > searchWindow_Top_Left_Coord.y()+this->searchWindowSize)
+        return false;
+    return true;
+}
+
+void BlockMatching::setHistorySize(int value){
+    this->historySize = value;
+}
+
+void BlockMatching::setOperationType(OperationType type){
+    this->operationType = type;
 }

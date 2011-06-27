@@ -1,6 +1,6 @@
 #include "fullsearch.h"
 
-FullSearch::FullSearch()
+FullSearch::FullSearch(OperationType type)
 {
     this->stopped = false;
     this->blockSize = 20;
@@ -8,6 +8,7 @@ FullSearch::FullSearch()
     this->firstFrame = new QImage();
     this->secondFrame = new QImage();
     this->duplicatesCounter = 1;
+    this->operationType = type;
 }
 
 FullSearch::~FullSearch(){
@@ -16,7 +17,6 @@ FullSearch::~FullSearch(){
 
 void FullSearch::run(){
     if(this->firstFrameIsSet && this->secondFrameIsSet){
-
 
         int blocksInWindow = this->searchWindowSize - this->blockSize;
         int numberOfBlocks_X = this->firstFrame->width() / this->blockSize;
@@ -34,6 +34,8 @@ void FullSearch::run(){
         // goes through each block of the first image
         for(int firstFrame_i=0;firstFrame_i<numberOfBlocks_X;firstFrame_i++){
             for(int firstFrame_j=0;firstFrame_j<numberOfBlocks_Y;firstFrame_j++){
+
+                this->localCandidateBestFits.clear();
 
                 prevSSD = 65000;
                 conflictCounter = 0;
@@ -100,6 +102,29 @@ void FullSearch::run(){
                                 drawTo.setX(blockTested_x);
                                 drawTo.setY(blockTested_y);
                             }
+                            //get the candidate best fits
+                            else{
+                                if(this->operationType == ImprovedOperation){
+                                    if(!this->localCandidateBestFits.isEmpty()){
+                                        if(this->localCandidateBestFits[0].second > sum){
+                                            this->localCandidateBestFits[0].second = sum;
+                                            this->localCandidateBestFits[0].first = QPoint(blockTested_x,blockTested_y);
+                                        }
+                                        else{
+                                            if(this->localCandidateBestFits[1].second > sum){
+                                                this->localCandidateBestFits[1].second = sum;
+                                                this->localCandidateBestFits[1].first = QPoint(blockTested_x,blockTested_y);
+                                            }
+                                        }
+                                    }
+                                    else{
+                                        QPair<QPoint,int> tempPoint = QPair<QPoint,int>(QPoint(blockTested_x,blockTested_y),sum);
+                                        for(i=0;i<this->cbfSize-1;i++){
+                                            this->localCandidateBestFits.append(tempPoint);
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -111,8 +136,13 @@ void FullSearch::run(){
                     drawPoints.first = drawFrom;
                     drawPoints.second = drawTo;
                     this->toDraw.append(drawPoints);
+                    QVector<QPoint> cBF(3,QPoint());
+                    cBF[0] = drawTo;
+                    for(int i=1;i<this->cbfSize;i++){
+                        cBF[i]= this->localCandidateBestFits[i].first;
+                    }
+                    this->candidatePoints.append(QPair<QPoint,QVector<QPoint> >(drawPoints.first,cBF));
                 }
-
             }
         }
     }

@@ -17,7 +17,9 @@ SOURCES += main.cpp\
     blockmatching.cpp \
     fullsearch.cpp \
     hexagonalsearch.cpp \
-    rhombussearch.cpp
+    rhombussearch.cpp \
+    improvesearch.cpp \
+    worker.cpp
 
 HEADERS  += mainwindow.h \
     imageshandler.h \
@@ -25,6 +27,8 @@ HEADERS  += mainwindow.h \
     blockmatching.h \
     fullsearch.h \
     hexagonalsearch.h \
-    rhombussearch.h
+    rhombussearch.h \
+    improvesearch.h \
+    worker.h
 
 FORMS    += mainwindow.ui

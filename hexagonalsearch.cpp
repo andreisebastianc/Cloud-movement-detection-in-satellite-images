@@ -21,7 +21,6 @@ void HexagonalSearch::run(){
 
         int numberOfBlocks_X = this->firstFrame->width() / this->blockSize;
         int numberOfBlocks_Y = this->firstFrame->height() / this->blockSize;
-
         long sum;
         int currentBlockPreparedVals[this->blockSize][this->blockSize], valuesInTestedBlock;
         int currentBlock_x, currentBlock_y,blockTested_x, blockTested_y;
@@ -52,7 +51,8 @@ void HexagonalSearch::run(){
                 drawFrom.setX(currentBlock_centX);
                 drawFrom.setY(currentBlock_centY);
                 //set the center of the big hexagon
-                bigHexagon.center = drawFrom;
+                hexagon.center = drawFrom;
+                hexagon.centerSSD = -1;
 
                 // fills an array of int with the values of each pixel in block,
                 // basically calculates the gray values of the current block
@@ -68,81 +68,103 @@ void HexagonalSearch::run(){
                 searchWindow_y = currentBlock_centY - (this->searchWindowSize-this->blockSize)/2;
 
                 //hexagonal search in the search window for matching block
+
                 while(!resultFound){
-                    sum = 0;
-                    //build the big hexagon by getting the points that make it
+                    //build the big rhombus by getting the points that make it
                     //get big hexagon points
-                    QList<QPoint> newHexa = this->getBigHexagonPoints(bigHexagon.center);
+                    QList<QPoint> newHexa = this->getRhombusPoints(hexagon.center);
                     //remove points from the QHash that don't represent the hexagon anymore
                     QHash<QPoint,int> newPoints;
                     //insert the new points with SSD -1 to be calculated at next run
                     for(int i=0;i<newHexa.size();i++){
-                        if(!bigHexagon.points.contains(newHexa.at(i))){
-                            newPoints.insert(newHexa.at(i),-1);
-                        }
-                        else{
-                            newPoints.insert(newHexa.at(i),bigHexagon.points.value(newHexa.at(i)));
-                        }
-                    }
-                    this->bigHexagon.points = newPoints;
-
-                    //and calculate ssd for each point to store in the hexagon data structure
-                    //ssd for the center
-                    blockTested_x = bigHexagon.center.x() - this->blockSize/2;
-                    blockTested_y = bigHexagon.center.y() - this->blockSize/2;
-                    for(int block_i = 0 ; block_i < this->blockSize ; block_i++){
-                        for(int block_j = 0 ; block_j < this->blockSize ; block_j++){
-                            if(blockTested_x > 0 && blockTested_x < this->secondFrame->width()-this->blockSize
-                                    && blockTested_y>0 && blockTested_y < this->secondFrame->height()-this->blockSize){
-                                valuesInTestedBlock = currentBlockPreparedVals[block_i][block_j] -qGray(this->secondFrame->pixel(block_i+blockTested_x,block_j+blockTested_y));
-                                sum += valuesInTestedBlock * valuesInTestedBlock;
+                        //check that the point is inside the search window, otherwise don't use it
+                        if(pointInSearchWindow(newHexa.at(i),QPoint(searchWindow_x,searchWindow_y))){
+                            if(!hexagon.points.contains(newHexa.at(i))){
+                                newPoints.insert(newHexa.at(i),-1);
+                            }
+                            else{
+                                newPoints.insert(newHexa.at(i),this->hexagon.points.value(newHexa.at(i)));
                             }
                         }
                     }
-                    bigHexagon.centerSSD = sum;
+                    this->hexagon.points.clear();
+                    this->hexagon.points = newPoints;
+
+                    //and calculate ssd for each point to store in the hexagon data structure
+
+                    //ssd for the center point
+                    //only if the value is not set
+                    if(hexagon.centerSSD == -1){
+                        blockTested_x = hexagon.center.x() - this->blockSize/2;
+                        blockTested_y = hexagon.center.y() - this->blockSize/2;
+                        for(int block_i = 0 ; block_i < this->blockSize ; block_i++){
+                            for(int block_j = 0 ; block_j < this->blockSize ; block_j++){
+                                if(blockTested_x > 0 && blockTested_x < this->secondFrame->width()-this->blockSize
+                                        && blockTested_y>0 && blockTested_y < this->secondFrame->height()-this->blockSize){
+                                    valuesInTestedBlock = currentBlockPreparedVals[block_i][block_j] -qGray(this->secondFrame->pixel(block_i+blockTested_x,block_j+blockTested_y));
+                                    sum += valuesInTestedBlock * valuesInTestedBlock;
+                                }
+                            }
+                        }
+                        hexagon.centerSSD = sum;
+                        prevSSD = hexagon.centerSSD;
+                    }
 
                     //ssd for the points stored in the QHash
                     /**
                       *@todo functie din calculul ssd
-                      *@todo functie din construirea hexagoanelor
                       */
-                    QHash<QPoint,int>::const_iterator i = bigHexagon.points.constBegin();
-                    while (i != bigHexagon.points.constEnd()) {
+                    QHash<QPoint, int>::iterator i = hexagon.points.begin();
+                    while (i != hexagon.points.end()) {
+                        //first search through the entire hash and for new points calculate the SSD
                         if(i.value() == -1){
+                            //position the coordinates of the block at the top left corner
+                            //for easier calculations
                             blockTested_x = i.key().x() - this->blockSize/2;
                             blockTested_y = i.key().y() - this->blockSize/2;
+                            //set the sum so ssd returns valid results
+                            sum = 0;
+                            //calculate ssd for the current block
                             for(int block_i = 0 ; block_i < this->blockSize ; block_i++){
                                 for(int block_j = 0 ; block_j < this->blockSize ; block_j++){
+                                    //check if block is out of image bonds
                                     if(blockTested_x > 0 && blockTested_x < this->secondFrame->width()-this->blockSize
                                             && blockTested_y>0 && blockTested_y < this->secondFrame->height()-this->blockSize){
+                                        //if block is valid calculate the ssd
                                         valuesInTestedBlock = currentBlockPreparedVals[block_i][block_j] -qGray(this->secondFrame->pixel(block_i+blockTested_x,block_j+blockTested_y));
                                         sum += valuesInTestedBlock * valuesInTestedBlock;
                                     }
                                 }
                             }
-                            bigHexagon.points.insert(i.key(),sum);
+                            //update the sum value for the current key
+                            hexagon.points.insert(i.key(),sum);
                         }
                         ++i;
                     }
 
                     //check the closest value - the smallest stored sum
                     //from the QHash values
-                    while (i != bigHexagon.points.constEnd()) {
+                    i = hexagon.points.begin();
+                    while (i != hexagon.points.end()) {
                         if(prevSSD > i.value()){
                             prevSSD = i.value();
                             drawTo = i.key();
                         }
+                        ++i;
                     }
-                    //for the center
+
                     //set so it prefers staying at center
-                    //SMALL HEXAGON
-                    if(bigHexagon.centerSSD <= prevSSD){
+                    //small rhombus
+                    if(hexagon.centerSSD <= prevSSD){
+                        drawTo = hexagon.center;
                         //if the one at center, build small hexagon
-                        QList<QPoint> newSmallHexa = this->getSmallHexagonPoints(bigHexagon.center);
+                        QList<QPoint> newSmallRhombus = this->getRhombusPoints(hexagon.center,SmallRhombus);
                         //compare and give result the best fit of the small hexagon points
-                        for(int j=0;j<newSmallHexa.size();j++){
-                            blockTested_x = newSmallHexa.at(j).x()- this->blockSize/2;
-                            blockTested_y = newSmallHexa.at(j).y() - this->blockSize/2;
+                        for(int j=0;j<newSmallRhombus.size();j++){
+                            //again set the coordinates for the block
+                            blockTested_x = newSmallRhombus.at(j).x()- this->blockSize/2;
+                            blockTested_y = newSmallRhombus.at(j).y() - this->blockSize/2;
+                            sum = 0;
                             for(int block_i = 0 ; block_i < this->blockSize ; block_i++){
                                 for(int block_j = 0 ; block_j < this->blockSize ; block_j++){
                                     if(blockTested_x > 0 && blockTested_x < this->secondFrame->width()-this->blockSize
@@ -152,34 +174,32 @@ void HexagonalSearch::run(){
                                     }
                                 }
                             }
-                            if(bigHexagon.centerSSD > sum){
+                            if(hexagon.centerSSD > sum){
                                 drawTo.setX(blockTested_x);
                                 drawTo.setY(blockTested_y);
-                                bigHexagon.centerSSD = sum;
+                                hexagon.centerSSD = sum;
                             }
                         }
-                        //else move the center of the hexagon at the smallest difference
-
                         resultFound = true;
                     }
                     else{ //center has bigger SSD than a side => rebuild the hexagon
                         //add the old center in the QHash
-                        bigHexagon.points.insert(bigHexagon.center,bigHexagon.centerSSD);
-
+                        hexagon.points.insert(hexagon.center,hexagon.centerSSD);
 
                         //new center - gets the ssd value and removed from the hexagon
-                        bigHexagon.center = drawTo;
-                        bigHexagon.centerSSD = bigHexagon.points.value(drawTo);
-                        bigHexagon.points.remove(drawTo);
+                        hexagon.center = drawTo;
+                        hexagon.centerSSD = hexagon.points.value(drawTo);
+                        prevSSD = hexagon.centerSSD;
+                        hexagon.points.remove(drawTo);
                     }
                 }
 
-
+                if(drawFrom.x() != drawTo.x() && drawFrom.y() != drawTo.y()){
                     QPair<QPoint,QPoint> drawPoints;
                     drawPoints.first = drawFrom;
                     drawPoints.second = drawTo;
                     this->toDraw.append(drawPoints);
-
+                }
             }
         }
     }
@@ -213,4 +233,41 @@ void HexagonalSearch::start(){
 
 void HexagonalSearch::stop(){
     this->stopped = true;
+}
+
+QList<QPoint> HexagonalSearch::getRhombusPoints(QPoint center,ObjectType type){
+    QList<QPoint> toReturn;
+    switch(type){
+        case BigRhombus:
+            toReturn << QPoint(center.x()-this->bigHexagonSpread,center.y());
+            toReturn << QPoint(center.x()+this->bigHexagonSpread,center.y());
+
+            toReturn << QPoint(center.x()+this->bigHexagonSpread/2,center.y()+this->bigHexagonSpread/2);
+            toReturn << QPoint(center.x()-this->bigHexagonSpread/2,center.y()-this->bigHexagonSpread/2);
+            toReturn << QPoint(center.x()+this->bigHexagonSpread/2,center.y()-this->bigHexagonSpread/2);
+            toReturn << QPoint(center.x()-this->bigHexagonSpread/2,center.y()+this->bigHexagonSpread/2);
+            break;
+        case SmallRhombus:
+            toReturn << QPoint(center.x()-this->smallHexagonSpread,center.y());
+            toReturn << QPoint(center.x()+this->smallHexagonSpread,center.y());
+            toReturn << QPoint(center.x(),center.y()-this->smallHexagonSpread);
+            toReturn << QPoint(center.x(),center.y()+this->smallHexagonSpread);
+            break;
+        default:
+            break;
+
+    }
+    return toReturn;
+}
+void HexagonalSearch::setSize(int newSize, ObjectType type){
+    switch(type){
+    case BigRhombus:
+        this->bigHexagonSpread = newSize;
+        break;
+    case SmallRhombus:
+        this->smallHexagonSpread = newSize;
+        break;
+    default:
+        break;
+    }
 }

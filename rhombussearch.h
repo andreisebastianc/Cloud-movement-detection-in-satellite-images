@@ -10,10 +10,6 @@
 #include "math.h"
 #include "blockmatching.h"
 
-enum RhombusType{
-    BigRhombus,
-    SmallRhombus
-};
 
 struct Rhombus{
     QPoint center;
@@ -21,13 +17,14 @@ struct Rhombus{
     QHash<QPoint,int> points;
 };
 
-class RhombusSearch : public QThread, public BlockMatching
+class RhombusSearch : public BlockMatching
 {
     Q_OBJECT
+
 public:
     explicit RhombusSearch();
     ~RhombusSearch();
-    void setSize(int newSize,RhombusType type=BigRhombus);
+    void setSize(int newSize,ObjectType type=BigRhombus);
     void start();
     void stop();
 
@@ -36,7 +33,7 @@ private:
     short smallRhombusSpread;
     volatile bool stopped;
     Rhombus rhombus;
-    QList<QPoint> getRhombusPoints(QPoint center,RhombusType type=BigRhombus);
+    QList<QPoint> getRhombusPoints(QPoint center,ObjectType type=BigRhombus);
 
 protected:
     void run();

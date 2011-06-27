@@ -12,10 +12,12 @@
 #include <QGraphicsScene>
 #include <QGraphicsItem>
 #include <QHash>
+#include <QTime>
 //#include "imageshandler.h"
 #include "fullsearch.h"
 #include "hexagonalsearch.h"
 #include "rhombussearch.h"
+#include "improvesearch.h"
 
 namespace Ui {
     class MainWindow;
@@ -47,7 +49,7 @@ public:
 
 private slots:
     void on_addImagesButton_released();
-    void on_filesListWidget_itemSelectionChanged();
+    //void on_filesListWidget_itemSelectionChanged();
     void on_blockSizeSlider_valueChanged(int value);
     void on_searchWindowSlider_valueChanged(int value);
     void on_diamondBigSize_valueChanged(int value);
@@ -57,12 +59,19 @@ private slots:
     void getMovementLines();
     void drawSearchWindow(int x, int y);
 
+    void on_actionExport_view_as_image_triggered();
+
+    void on_useImportantCheckBox_toggled(bool checked);
+
+    void on_filesListWidget_currentRowChanged(int currentRow);
+
 private:
-    int blockSize;
-    int windowSize;
-    int flags;
-    QList<QPair<QPoint,QPoint> > draw;
-    QHash<QPair<int,int>, QVector<QList<Movement*> > > allTheMovementData;
+    short blockSize;
+    short windowSize;
+    short flags;
+    short currentFrame;
+    bool operationComplete;
+    QVector<QList<QPair<QPoint,QPoint> > > draw;
 
     Ui::MainWindow *ui;
     QList<QString> imagesPath;
@@ -74,12 +83,14 @@ private:
     FullSearch* fullFinder;
     HexagonalSearch* hexFinder;
     RhombusSearch* rhombusFinder;
+    ImproveSearch* improvedFinder;
 
     void clearVectors();
     void loadImages();
     void drawLines();
     void drawDots();
     void redisplayImage();
+    void exportResults();
 };
 
 #endif // MAINWINDOW_H

@@ -16,23 +16,26 @@ struct Hexagon{
     QHash<QPoint,int> points;
 };
 
-class HexagonalSearch : public QThread, public BlockMatching
+class HexagonalSearch : public BlockMatching
 {
     Q_OBJECT
+
 public:
     explicit HexagonalSearch();
     ~HexagonalSearch();
     void start();
+    void setSize(int newSize,ObjectType type=BigRhombus);
     void stop();
 
 private:
     short bigHexagonSpread;
     short smallHexagonSpread;
     volatile bool stopped;
-    Hexagon bigHexagon;
-    Hexagon smallHexagon;
+    Hexagon hexagon;
     QList<QPoint> getBigHexagonPoints(QPoint center);
     QList<QPoint> getSmallHexagonPoints(QPoint center);
+    QList<QPoint> getRhombusPoints(QPoint center,ObjectType type=BigRhombus);
+
 
 protected:
     void run();

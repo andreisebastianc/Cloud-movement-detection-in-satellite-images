@@ -9,11 +9,12 @@
 #include "math.h"
 #include "blockmatching.h"
 
-class FullSearch : public QThread, public BlockMatching
+class FullSearch :  public BlockMatching
 {
     Q_OBJECT
+
 public:
-    explicit FullSearch();
+    explicit FullSearch(OperationType type=NormalOperation);
     ~FullSearch();
     void start();
     void stop();

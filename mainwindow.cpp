@@ -7,17 +7,21 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
     this->displayScene.setBackgroundBrush(QBrush(QColor(230,230,230)));
+    this->displayScene.setItemIndexMethod(QGraphicsScene::NoIndex);
     ui->imageDisplayer->setScene(&this->displayScene);
     this->blockSize = ui->blockSizeSlider->value();
     this->windowSize = ui->searchWindowSlider->value();
     this->ui->filesListWidget->setSortingEnabled(true);
-    this->ui->coeficientInput->setText(QString("1"));
     this->drawSearchWindow(0,0);
 
     this->fullFinder = new FullSearch();
     this->hexFinder = new HexagonalSearch();
+    this->rhombusFinder = new RhombusSearch();
+    this->improvedFinder = new ImproveSearch();
+
     //set display flags
     this->setFlags(MovementLines|SearchWindow|Image);
+    this->operationComplete = false;
 
     //external actions
     connect(ui->actionGrid,SIGNAL(toggled(bool)),ui->imageDisplayer,SLOT(setBlockGridVisible(bool)));
@@ -29,6 +33,8 @@ MainWindow::~MainWindow()
     delete ui;
     //delete this->imageHandler;
     delete this->fullFinder;
+    delete this->rhombusFinder;
+    delete this->hexFinder;
     while(!this->images.empty()){
         delete this->images.takeFirst();
     }
@@ -65,6 +71,7 @@ void MainWindow::updateDisplay(){
   *
   */
 void MainWindow::updateDisplay(int flags){
+    this->displayScene.clear();
     if(flags&Image){
         this->redisplayImage();
     }
@@ -114,32 +121,57 @@ void MainWindow::on_addImagesButton_released()
 
 /** updates the image view based on the selected item from the images view
   *
+  * REMOVED WHEN UPDATED WITH currentRowChanged(int currentRow) slot
   */
-void MainWindow::on_filesListWidget_itemSelectionChanged()
-{
-    short pos = ui->filesListWidget->currentRow();
-    this->pixmapObject = QPixmap::fromImage(*images.at(pos));
-    this->ui->searchWindowSlider->setMaximum(this->displayScene.width());
-    if(pos%2==0){
-        this->updateDisplay(MovementDots|SearchWindow|Image);
-    }
-    else{
-        this->updateDisplay();
-    }
-}
+//void MainWindow::on_filesListWidget_itemSelectionChanged()
+//{
+//    short pos = ui->filesListWidget->currentRow();
+//    this->pixmapObject = QPixmap::fromImage(*images.at(pos));
+//    this->ui->searchWindowSlider->setMaximum(this->displayScene.width());
+//    if(pos%2==0){
+//        this->updateDisplay(MovementDots|SearchWindow|Image);
+//    }
+//    else{
+//        this->updateDisplay();
+//    }
+//}
 
 /** the default run application call
   *
   */
 void MainWindow::on_actionRun_triggered(){
-//    this->fullFinder->setFirstFrame(new QImage(this->imagesPath.at(0)));
-//    this->fullFinder->setSecondFrame(this->imagesPath.at(1));
-//    connect(this->fullFinder,SIGNAL(operationsComplete()),this,SLOT(getMovementLines()));
-//    this->fullFinder->start();
-    this->hexFinder->setFirstFrame(new QImage(this->imagesPath.at(0)));
-    this->hexFinder->setSecondFrame(this->imagesPath.at(1));
-    connect(this->hexFinder,SIGNAL(operationsComplete()),this,SLOT(getMovementLines()));
-    this->hexFinder->start();
+    this->draw.clear();
+    switch(this->ui->searchTypeSelect->currentIndex()){
+    default:
+        break;
+    case 0://fullsearch
+        qDebug() << "full search";
+        for(int i = 0; i<this->imagesPath.count()-1;i++){
+            this->fullFinder->setFirstFrame(new QImage(this->imagesPath.at(i)));
+            this->fullFinder->setSecondFrame(new QImage(this->imagesPath.at(i+1)));
+            connect(this->fullFinder,SIGNAL(operationsComplete()),this,SLOT(getMovementLines()));
+            this->fullFinder->start();
+        }
+        break;
+    case 1://diamond(rhombus) search
+        qDebug() << "diamond search";
+        for(int i = 0; i<this->imagesPath.count()-1;i++){
+            this->rhombusFinder->setFirstFrame(new QImage(this->imagesPath.at(i)));
+            this->rhombusFinder->setSecondFrame(new QImage(this->imagesPath.at(i+1)));
+            connect(this->rhombusFinder,SIGNAL(operationsComplete()),this,SLOT(getMovementLines()));
+            this->rhombusFinder->start();
+        }
+        break;
+    case 2://hexagonal
+        qDebug() << "hex search";
+        for(int i = 0; i<this->imagesPath.count()-1;i++){
+            this->hexFinder->setFirstFrame(new QImage(this->imagesPath.at(i)));
+            this->hexFinder->setSecondFrame(new QImage(this->imagesPath.at(i+1)));
+            connect(this->hexFinder,SIGNAL(operationsComplete()),this,SLOT(getMovementLines()));
+            this->hexFinder->start();
+        }
+        break;
+    }
 }
 
 void MainWindow::on_actionClear_Vectors_triggered(){
@@ -150,8 +182,20 @@ void MainWindow::on_actionClear_Vectors_triggered(){
   *
   */
 void MainWindow::getMovementLines(){
-    this->draw = this->fullFinder->getWhatToDraw();
+    switch(this->ui->searchTypeSelect->currentIndex()){
+    case 0:
+        this->draw.append(this->fullFinder->getWhatToDraw());
+        break;
+    case 1:
+        this->draw.append(this->rhombusFinder->getWhatToDraw());
+        break;
+    case 2:
+        this->draw.append(this->hexFinder->getWhatToDraw());
+        break;
+    }
+
     this->updateDisplay(MovementDots|SearchWindow|Image);
+    this->operationComplete = true;
 }
 
 /**
@@ -159,10 +203,10 @@ void MainWindow::getMovementLines(){
   */
 void MainWindow::drawDots(){
     this->drawSearchWindow(0,0);
-    for(int i=0;i<this->draw.size();i++){
+    for(int i=0;i<this->draw[this->currentFrame].size();i++){
         QGraphicsRectItem *dot = new QGraphicsRectItem(
-                    this->draw.at(i).first.x()+this->blockSize/2,
-                    this->draw.at(i).first.y()+this->blockSize/2,
+                    this->draw[this->currentFrame].at(i).first.x()+this->blockSize/2,
+                    this->draw[this->currentFrame].at(i).first.y()+this->blockSize/2,
                     1,
                     1
                     );
@@ -176,12 +220,12 @@ void MainWindow::drawDots(){
   *
   */
 void MainWindow::drawLines(){
-    for(int i=0;i<this->draw.size();i++){
+    for(int i=0;i<this->draw[this->currentFrame].size();i++){
         QGraphicsLineItem *line = new QGraphicsLineItem(
-                    this->draw.at(i).first.x()+this->blockSize/2,
-                    this->draw.at(i).first.y()+this->blockSize/2,
-                    this->draw.at(i).second.x()+this->blockSize/2,
-                    this->draw.at(i).second.y()+this->blockSize/2
+                    this->draw[this->currentFrame].at(i).first.x()+this->blockSize/2,
+                    this->draw[this->currentFrame].at(i).first.y()+this->blockSize/2,
+                    this->draw[this->currentFrame].at(i).second.x()+this->blockSize/2,
+                    this->draw[this->currentFrame].at(i).second.y()+this->blockSize/2
                     );
         line->setPen(QPen(Qt::red));
         this->displayScene.addItem(line);
@@ -197,6 +241,8 @@ void MainWindow::on_blockSizeSlider_valueChanged(int value)
 {
     this->blockSize = value;
     this->fullFinder->setConstraitmentSizes(this->blockSize,this->windowSize);
+    this->rhombusFinder->setConstraitmentSizes(this->blockSize,this->windowSize);
+    this->hexFinder->setConstraitmentSizes(this->blockSize,this->windowSize);
     this->ui->imageDisplayer->setGridBlockSize(value);
     ui->blockSizeLabel->setText("Block size: "+QString::number(value));
 }
@@ -205,36 +251,42 @@ void MainWindow::on_blockSizeSlider_valueChanged(int value)
   * sets the value in the worker thread
   *
   */
-void MainWindow::on_searchWindowSlider_valueChanged(int value)
-{
+void MainWindow::on_searchWindowSlider_valueChanged(int value){
     this->windowSize = value;
     this->fullFinder->setConstraitmentSizes(this->blockSize,this->windowSize);
+    this->rhombusFinder->setConstraitmentSizes(this->blockSize,this->windowSize);
+    this->hexFinder->setConstraitmentSizes(this->blockSize,this->windowSize);
     ui->searchWindowLabel->setText("Search window size: "+QString::number(value));
     this->drawSearchWindow(0,0);
 }
 
-void MainWindow::on_coeficientCheck_toggled(bool checked)
-{
-    if(checked == true){
-        this->ui->coeficientInput->setEnabled(true);
-    }
-    else{
-        this->ui->coeficientInput->setEnabled(false);
-    }
+/** sets size
+  *
+  */
+void MainWindow::on_diamondBigSize_valueChanged(int value){
+    this->rhombusFinder->setSize(value,BigRhombus);
+    ui->diamondBigSizeLabel->setText("Search window size: "+QString::number(value));
 }
 
-void MainWindow::on_coeficientInput_returnPressed()
-{
-    this->fullFinder->setCoeficient(ui->coeficientInput->text().toInt());
+/** sets size
+  *
+  */
+void MainWindow::on_diamondSmallSize_valueChanged(int value){
+    this->rhombusFinder->setSize(value,BigRhombus);
+    ui->diamondSmallSizeLabel->setText("Search window size: "+QString::number(value));
 }
 
 
-// redisplays the image
+/** redisplays the image
+  *
+  */
 void MainWindow::redisplayImage(){
-    this->displayScene.clear();
     this->displayScene.addPixmap(this->pixmapObject);
 }
 
+/** clears the display
+  *
+  */
 void MainWindow::clearVectors(){
     this->displayScene.clear();
 }
@@ -250,10 +302,11 @@ void MainWindow::drawSearchWindow(int x, int y){
     //only if flag is set
     if(this->flags&SearchWindow){
         //calculate the coordinates of the search window
-        int horSide = (ui->imageDisplayer->width() -ui->imageDisplayer->scene()->width()) / 2;
-        int vertSide = (ui->imageDisplayer->height() -ui->imageDisplayer->scene()->height()) / 2;
-        x = x- horSide;
-        y = y- vertSide;
+        QPolygonF scenePolygon = ui->imageDisplayer->mapToScene(ui->imageDisplayer->viewport()->rect());
+        x = x + scenePolygon.at(0).x();
+        y = y + scenePolygon.at(0).y();
+        int point_x = ( x / this->blockSize ) * this->blockSize;
+        int point_y = ( y / this->blockSize ) * this->blockSize;
         if(x > 0 && x < ui->imageDisplayer->scene()->width() && y > 0 && y < ui->imageDisplayer->scene()->height()){
             x = ( x / this->blockSize ) * this->blockSize - (this->windowSize-this->blockSize)/2;
             y = ( y / this->blockSize ) * this->blockSize - (this->windowSize-this->blockSize)/2;
@@ -266,10 +319,80 @@ void MainWindow::drawSearchWindow(int x, int y){
                         this->windowSize,
                         this->windowSize
                         );
-            theSearchwindow->setPen(QPen(Qt::green));
-            theSearchwindow->setBrush(QBrush(Qt::black,Qt::Dense7Pattern));
+            theSearchwindow->setPen(QPen(Qt::red));
+            theSearchwindow->setBrush(QBrush(Qt::black,Qt::NoBrush));
             this->displayScene.addItem(theSearchwindow);
             theSearchwindow->setZValue(100);
+
+            if(this->operationComplete){
+                for(int i=0;i<this->draw[this->currentFrame/2].size();i++){
+                    if(this->draw[this->currentFrame].at(i).first.x() == point_x && this->draw[0].at(i).first.y() == point_y){
+                        QGraphicsLineItem *line = new QGraphicsLineItem(
+                                    this->draw[this->currentFrame/2].at(i).first.x()+this->blockSize/2,
+                                    this->draw[this->currentFrame/2].at(i).first.y()+this->blockSize/2,
+                                    this->draw[this->currentFrame/2].at(i).second.x()+this->blockSize/2,
+                                    this->draw[this->currentFrame/2].at(i).second.y()+this->blockSize/2
+                                    );
+                        line->setPen(QPen(Qt::red));
+                        this->displayScene.addItem(line);
+                        line->setZValue(100);
+                    }
+                }
+            }
         }
+    }
+}
+
+/**
+  *
+  */
+void MainWindow::on_actionExport_view_as_image_triggered()
+{
+    QString filename = QFileDialog::getSaveFileName(
+            this,
+            tr("Save Current View"),
+            QDir::currentPath(),
+            tr("Images (*.png,*.jpg)") );
+        if( !filename.isNull() )
+        {
+            QImage img(this->displayScene.width(),this->displayScene.height(),QImage::Format_ARGB32_Premultiplied);
+            QPainter p(&img);
+            this->displayScene.render(&p);
+            p.end();
+            img.save(filename);
+        }
+}
+
+/**
+  *
+  */
+void MainWindow::on_useImportantCheckBox_toggled(bool checked)
+{
+    if(checked){
+        this->fullFinder->setOperationType(ImprovedOperation);
+    }
+}
+
+void MainWindow::exportResults(){
+    if(this->operationComplete){
+        for(int i=0;i<this->draw.count();i++){
+        }
+    }
+}
+
+void MainWindow::on_filesListWidget_currentRowChanged(int currentRow){
+    this->pixmapObject = QPixmap::fromImage(*images.at(currentRow));
+    this->ui->searchWindowSlider->setMaximum(this->displayScene.width());
+    currentRow == 0 ? this->currentFrame = currentRow : this->currentFrame = currentRow -1 ;
+    if(this->operationComplete){
+        if(currentRow==0){
+            this->updateDisplay(MovementDots|SearchWindow|Image);
+        }
+        else{
+            this->updateDisplay(MovementLines|Image);
+        }
+    }
+    else{
+        this->updateDisplay(Image);
     }
 }
