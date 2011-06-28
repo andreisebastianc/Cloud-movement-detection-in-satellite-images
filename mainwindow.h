@@ -65,6 +65,7 @@ private slots:
 
     void on_filesListWidget_currentRowChanged(int currentRow);
 
+
 private:
     short blockSize;
     short windowSize;

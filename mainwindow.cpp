@@ -64,7 +64,7 @@ void MainWindow::updateDisplay(){
         this->drawDots();
     }
     if(this->flags&SearchWindow){
-        this->drawSearchWindow(10,10);
+        this->drawSearchWindow(this->windowSize,this->windowSize);
     }
 }
 
@@ -84,7 +84,7 @@ void MainWindow::updateDisplay(int flags){
         this->drawDots();
     }
     if(flags&SearchWindow){
-        this->drawSearchWindow(10,10);
+        this->drawSearchWindow(this->windowSize,this->windowSize);
     }
 }
 
@@ -105,8 +105,7 @@ void MainWindow::on_addImagesButton_released()
         for(int i=0;i<files.count();i++){
             theFileInfo.setFile(files.at(i));
             QListWidgetItem* item = new QListWidgetItem(theFileInfo.fileName(),ui->filesListWidget);
-            item->setFlags(Qt::ItemIsSelectable|Qt::ItemIsUserCheckable|Qt::ItemIsEnabled);
-            item->setCheckState(Qt::Unchecked);
+            item->setFlags(Qt::ItemIsSelectable|Qt::ItemIsEnabled);
             ui->filesListWidget->addItem(item);
             this->imagesPath << files.at(i);
             this->images << new QImage(files.at(i));
