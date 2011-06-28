@@ -142,14 +142,17 @@ void MainWindow::on_addImagesButton_released()
   *
   */
 void MainWindow::on_actionRun_triggered(){
-    this->draw->clear();
-    this->cbfPoints->clear();
+    qDebug() << "run" <<this->draw->size();
+    delete this->draw;
+    this->draw = new QVector<QList<QPair<QPoint,QPoint> > > ();
+    qDebug() << "run-empty" <<this->draw->size();
     switch(this->ui->searchTypeSelect->currentIndex()){
     default:
         break;
     case 0://fullsearch
         qDebug() << "full search";
         for(int i = 0; i<this->imagesPath.count()-1;i++){
+            this->fullFinder->disconnect();
             this->fullFinder->setFirstFrame(new QImage(this->imagesPath.at(i)));
             this->fullFinder->setSecondFrame(new QImage(this->imagesPath.at(i+1)));
             connect(this->fullFinder,SIGNAL(operationsComplete()),this,SLOT(getMovementLines()));
@@ -159,6 +162,7 @@ void MainWindow::on_actionRun_triggered(){
     case 1://diamond(rhombus) search
         qDebug() << "diamond search";
         for(int i = 0; i<this->imagesPath.count()-1;i++){
+            this->rhombusFinder->disconnect();
             this->rhombusFinder->setFirstFrame(new QImage(this->imagesPath.at(i)));
             this->rhombusFinder->setSecondFrame(new QImage(this->imagesPath.at(i+1)));
             connect(this->rhombusFinder,SIGNAL(operationsComplete()),this,SLOT(getMovementLines()));
@@ -168,6 +172,7 @@ void MainWindow::on_actionRun_triggered(){
     case 2://hexagonal
         qDebug() << "hex search";
         for(int i = 0; i<this->imagesPath.count()-1;i++){
+            this->hexFinder->disconnect();
             this->hexFinder->setFirstFrame(new QImage(this->imagesPath.at(i)));
             this->hexFinder->setSecondFrame(new QImage(this->imagesPath.at(i+1)));
             connect(this->hexFinder,SIGNAL(operationsComplete()),this,SLOT(getMovementLines()));
@@ -187,6 +192,7 @@ void MainWindow::on_actionClear_Vectors_triggered(){
 void MainWindow::getMovementLines(){
     switch(this->ui->searchTypeSelect->currentIndex()){
     case 0:
+        qDebug() << "mov lines" <<this->draw->size();
         this->draw->append(this->fullFinder->getWhatToDraw());
         break;
     case 1:
@@ -271,15 +277,17 @@ void MainWindow::on_searchWindowSlider_valueChanged(int value){
   */
 void MainWindow::on_diamondBigSize_valueChanged(int value){
     this->rhombusFinder->setSize(value,BigRhombus);
-    ui->diamondBigSizeLabel->setText("Search window size: "+QString::number(value));
+    this->hexFinder->setSize(value,BigHexagon);
+    ui->diamondBigSizeLabel->setText("Big pattern size: "+QString::number(value));
 }
 
 /** sets size
   *
   */
 void MainWindow::on_diamondSmallSize_valueChanged(int value){
-    this->rhombusFinder->setSize(value,BigRhombus);
-    ui->diamondSmallSizeLabel->setText("Search window size: "+QString::number(value));
+    this->rhombusFinder->setSize(value,SmallHexagon);
+    this->hexFinder->setSize(value,SmallHexagon);
+    ui->diamondSmallSizeLabel->setText("Small pattern size: "+QString::number(value));
 }
 
 
@@ -386,6 +394,8 @@ void MainWindow::exportResults(){
 void MainWindow::on_filesListWidget_currentRowChanged(int currentRow){
     this->pixmapObject = QPixmap::fromImage(*images.at(currentRow));
     this->ui->searchWindowSlider->setMaximum(this->displayScene.width());
+    qDebug() << currentRow;
+    qDebug() << this->draw->size();
     currentRow == 0 ? this->currentFrame = currentRow : this->currentFrame = currentRow -1 ;
     if(this->operationComplete){
         if(currentRow==0){

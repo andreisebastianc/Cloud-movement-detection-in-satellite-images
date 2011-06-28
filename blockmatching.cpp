@@ -8,8 +8,6 @@ BlockMatching::BlockMatching() : QThread()
 BlockMatching::~BlockMatching(){
     delete this->firstFrame;
     delete this->secondFrame;
-    delete this->candidatePoints;
-    delete this->localCandidateBestFits;
 }
 
 

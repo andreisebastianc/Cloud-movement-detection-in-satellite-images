@@ -34,7 +34,7 @@ private:
     Hexagon hexagon;
     QList<QPoint> getBigHexagonPoints(QPoint center);
     QList<QPoint> getSmallHexagonPoints(QPoint center);
-    QList<QPoint> getRhombusPoints(QPoint center,ObjectType type=BigRhombus);
+    QList<QPoint> getHexagonPoints(QPoint center,ObjectType type=BigRhombus);
 
 
 protected:

@@ -18,6 +18,9 @@ RhombusSearch::~RhombusSearch(){
 
 void RhombusSearch::run(){
     if(this->firstFrameIsSet && this->secondFrameIsSet){
+        qDebug() << "thread" <<this->toDraw.size();
+        this->toDraw = QList<QPair<QPoint,QPoint> > ();
+        qDebug() << "thread-empty" <<this->toDraw.size();
 
         int numberOfBlocks_X = this->firstFrame->width() / this->blockSize;
         int numberOfBlocks_Y = this->firstFrame->height() / this->blockSize;

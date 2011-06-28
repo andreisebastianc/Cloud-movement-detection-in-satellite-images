@@ -19,6 +19,9 @@ FullSearch::~FullSearch(){
 
 void FullSearch::run(){
     if(this->firstFrameIsSet && this->secondFrameIsSet){
+        qDebug() << "thread" <<this->toDraw.size();
+        this->toDraw = QList<QPair<QPoint,QPoint> > ();
+        qDebug() << "thread-empty" <<this->toDraw.size();
 
         int blocksInWindow = this->searchWindowSize - this->blockSize;
         int numberOfBlocks_X = this->firstFrame->width() / this->blockSize;
@@ -149,8 +152,8 @@ void FullSearch::run(){
                 }
             }
         }
+        emit operationsComplete();
     }
-    emit operationsComplete();
 }
 
 

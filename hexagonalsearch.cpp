@@ -18,6 +18,9 @@ HexagonalSearch::~HexagonalSearch(){
 
 void HexagonalSearch::run(){
     if(this->firstFrameIsSet && this->secondFrameIsSet){
+        qDebug() << "thread" <<this->toDraw.size();
+        this->toDraw = QList<QPair<QPoint,QPoint> > ();
+        qDebug() << "thread-empty" <<this->toDraw.size();
 
         int numberOfBlocks_X = this->firstFrame->width() / this->blockSize;
         int numberOfBlocks_Y = this->firstFrame->height() / this->blockSize;
@@ -70,9 +73,9 @@ void HexagonalSearch::run(){
                 //hexagonal search in the search window for matching block
 
                 while(!resultFound){
-                    //build the big rhombus by getting the points that make it
+                    //build the big hexagon by getting the points that make it
                     //get big hexagon points
-                    QList<QPoint> newHexa = this->getRhombusPoints(hexagon.center);
+                    QList<QPoint> newHexa = this->getHexagonPoints(hexagon.center);
                     //remove points from the QHash that don't represent the hexagon anymore
                     QHash<QPoint,int> newPoints;
                     //insert the new points with SSD -1 to be calculated at next run
@@ -154,16 +157,16 @@ void HexagonalSearch::run(){
                     }
 
                     //set so it prefers staying at center
-                    //small rhombus
+                    //small hexagon
                     if(hexagon.centerSSD <= prevSSD){
                         drawTo = hexagon.center;
                         //if the one at center, build small hexagon
-                        QList<QPoint> newSmallRhombus = this->getRhombusPoints(hexagon.center,SmallRhombus);
+                        QList<QPoint> newSmallhexagon = this->getHexagonPoints(hexagon.center,SmallHexagon);
                         //compare and give result the best fit of the small hexagon points
-                        for(int j=0;j<newSmallRhombus.size();j++){
+                        for(int j=0;j<newSmallhexagon.size();j++){
                             //again set the coordinates for the block
-                            blockTested_x = newSmallRhombus.at(j).x()- this->blockSize/2;
-                            blockTested_y = newSmallRhombus.at(j).y() - this->blockSize/2;
+                            blockTested_x = newSmallhexagon.at(j).x()- this->blockSize/2;
+                            blockTested_y = newSmallhexagon.at(j).y() - this->blockSize/2;
                             sum = 0;
                             for(int block_i = 0 ; block_i < this->blockSize ; block_i++){
                                 for(int block_j = 0 ; block_j < this->blockSize ; block_j++){
@@ -206,26 +209,6 @@ void HexagonalSearch::run(){
     emit operationsComplete();
 }
 
-QList<QPoint> HexagonalSearch::getBigHexagonPoints(QPoint center){
-    QList<QPoint> toReturn;
-    toReturn << QPoint(center.x()-this->bigHexagonSpread*this->blockSize,center.y());
-    toReturn << QPoint(center.x()+this->bigHexagonSpread*this->blockSize,center.y());
-    toReturn << QPoint(center.x()-(this->bigHexagonSpread*this->blockSize)/2,center.y()-this->bigHexagonSpread*this->blockSize);
-    toReturn << QPoint(center.x()+(this->bigHexagonSpread*this->blockSize)/2,center.y()-this->bigHexagonSpread*this->blockSize);
-    toReturn << QPoint(center.x()-(this->bigHexagonSpread*this->blockSize)/2,center.y()+this->bigHexagonSpread*this->blockSize);
-    toReturn << QPoint(center.x()+(this->bigHexagonSpread*this->blockSize)/2,center.y()+this->bigHexagonSpread*this->blockSize);
-    return toReturn;
-}
-
-QList<QPoint> HexagonalSearch::getSmallHexagonPoints(QPoint center){
-    QList<QPoint> toReturn;
-    toReturn << QPoint(center.x()-(this->bigHexagonSpread*this->blockSize)/2,center.y());
-    toReturn << QPoint(center.x()+(this->bigHexagonSpread*this->blockSize)/2,center.y());
-    toReturn << QPoint(center.x(),center.y()-(this->bigHexagonSpread*this->blockSize)/2);
-    toReturn << QPoint(center.x(),center.y()-(this->bigHexagonSpread*this->blockSize)/2);
-    return toReturn;
-}
-
 void HexagonalSearch::start(){
     this->stopped = false;
     run();
@@ -235,10 +218,10 @@ void HexagonalSearch::stop(){
     this->stopped = true;
 }
 
-QList<QPoint> HexagonalSearch::getRhombusPoints(QPoint center,ObjectType type){
+QList<QPoint> HexagonalSearch::getHexagonPoints(QPoint center,ObjectType type){
     QList<QPoint> toReturn;
     switch(type){
-        case BigRhombus:
+        case BigHexagon:
             toReturn << QPoint(center.x()-this->bigHexagonSpread,center.y());
             toReturn << QPoint(center.x()+this->bigHexagonSpread,center.y());
 
@@ -247,7 +230,7 @@ QList<QPoint> HexagonalSearch::getRhombusPoints(QPoint center,ObjectType type){
             toReturn << QPoint(center.x()+this->bigHexagonSpread/2,center.y()-this->bigHexagonSpread/2);
             toReturn << QPoint(center.x()-this->bigHexagonSpread/2,center.y()+this->bigHexagonSpread/2);
             break;
-        case SmallRhombus:
+        case SmallHexagon:
             toReturn << QPoint(center.x()-this->smallHexagonSpread,center.y());
             toReturn << QPoint(center.x()+this->smallHexagonSpread,center.y());
             toReturn << QPoint(center.x(),center.y()-this->smallHexagonSpread);
@@ -261,10 +244,10 @@ QList<QPoint> HexagonalSearch::getRhombusPoints(QPoint center,ObjectType type){
 }
 void HexagonalSearch::setSize(int newSize, ObjectType type){
     switch(type){
-    case BigRhombus:
+    case BigHexagon:
         this->bigHexagonSpread = newSize;
         break;
-    case SmallRhombus:
+    case SmallHexagon:
         this->smallHexagonSpread = newSize;
         break;
     default:
